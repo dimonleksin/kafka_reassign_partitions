@@ -30,22 +30,25 @@ func main() {
 			log.Fatal(err)
 		}
 
-		for i := 0; i < 2; i++ {
-			RebalancePlane, err = r.CreateRebalancePlane()
-			if err != nil {
-				log.Fatal(err)
-			}
-			r = RebalancePlane
+		RebalancePlane, err = r.CreateRebalancePlane()
+		if err != nil {
+			log.Fatal(err)
 		}
+		r = RebalancePlane
+
 		fmt.Println()
-		for i, v := range RebalancePlane.Brokers {
-			// for _, t := range v.Topic {
-			// 	log.Printf("After rebalance inside broker %d contains %v", i, t)
-			// }
+
+		for i, v := range r.Brokers {
+			for _, t := range v.Topic {
+				log.Printf("After rebalance inside broker %d contains %v", i, t)
+			}
 			log.Printf("After rebalance inside broker %d contains %d topics", i, len(v.Topic))
 			log.Printf("For broker %d after rebalance number by leaders %d", i, v.Leaders)
 			fmt.Println()
 		}
-		// log.Println(RebalancePlane)
+		err = r.Rebalance(admin)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

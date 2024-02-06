@@ -31,8 +31,7 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin) (err error) {
 	for i := 0; i < 5; i++ {
 		c.Brokers[i].Topic = make(map[int]string)
 	}
-	// delete(c.Brokers, 0)
-	// c.Brokers = make(map[int32]Topics)
+
 	for k, i := range topics {
 		for p, bs := range i.ReplicaAssignment {
 			// c := len(bs)
@@ -61,83 +60,76 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin) (err error) {
 
 func (c Cluster) CreateRebalancePlane() (result Cluster, err error) {
 	var (
-		allTopics    []string
-		leaders      int
-		l            int
-		avg          int
-		tmp          int
-		co           int
-		co2          int
-		avgByLeaders int
-		tmpResult    Cluster
+		allTopics     map[int]string
+		allTopicsSort map[int]string
+		leaders       int
+		counter       int
 	)
-	for i := 0; i < 5; i++ {
-		result.Brokers[i].Topic = make(map[int]string)
-	}
-	for i := 0; i < 5; i++ {
-		tmpResult.Brokers[i].Topic = make(map[int]string)
-	}
-	// var counter int = 0
+
+	allTopics = make(map[int]string)
+
 	for _, v := range c.Brokers {
 		for _, t := range v.Topic {
-			allTopics = append(allTopics, t)
+			allTopics[counter] = t
+			counter++
 		}
 		leaders += v.Leaders
 	}
-	l = len(allTopics) //Number of topics
-	avg = l / 4
-	avgByLeaders = avg / 3
-	log.Println(avgByLeaders)
-	co = 1
-	co2 = 1
-	tmp = avg
-	for i := 0; i < l; i++ {
-		if i >= tmp && tmp < avg*4 {
-			tmp += avg
-			co++
-		}
 
-		if co2 >= 4 {
-			co2 = 1
-		}
-
-		currentRole, err := strconv.Atoi(strings.Split(allTopics[i], "-")[len(strings.Split(allTopics[i], "-"))-1])
-		if err != nil {
-			return result, err
-		}
-		if tmpResult.Brokers[co].Leaders >= avgByLeaders && currentRole == 1 {
-			if co < 4 {
-				tmpResult.Brokers[co+1].Topic[i] = allTopics[i]
-				tmpResult.Brokers[co+1].Leaders += 1
-			} else {
-				tmpResult.Brokers[co2].Topic[i] = allTopics[i]
-				tmpResult.Brokers[co2].Leaders += 1
-				co2++
-			}
-			// if currentRole == 1 {
-
-			// }
-
-		} else {
-			tmpResult.Brokers[co].Topic[i] = allTopics[i]
-
-			// if err != nil {
-			// 	return result, err
-			// }
-			if currentRole == 1 {
-				tmpResult.Brokers[co].Leaders += 1
-			}
-		}
+	allTopicsSort, err = sortTopicMap(allTopics)
+	if err != nil {
+		return result, err
 	}
-	result = tmpResult
+
+	// log.Printf("Sorted topic list: %v", allTopicsSort)
+
+	result, err = makePlane(allTopicsSort)
+	if err != nil {
+		return result, nil
+	}
+
 	return result, nil
 }
 
-// func (c Cluster) Rebalance(palne Cluster, admin sarama.ClusterAdmin) error {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin) error {
+	var (
+		topic       string
+		partitionID int
+		err         error
+		// assigment   []int32
+	)
 
-// err := admin.AlterPartitionReassignments()
-// if err != nil {
-// 	return err
-// }
-// 	return nil
-// }
+	assigments := make(map[string][][]int32)
+
+	for i := 1; i < len(c.Brokers); i++ {
+		for _, t := range c.Brokers[i].Topic {
+			tmp := strings.Split(t, "-")
+			topic = tmp[0]
+			partitionID, err = strconv.Atoi(tmp[1])
+			if err != nil {
+				return err
+			}
+			if len(assigments[topic]) == 0 {
+				// log.Println("Make slices")
+				assigments[topic] = make([][]int32, 63)
+			}
+			if len(assigments[topic][partitionID]) == 0 {
+				assigments[topic][partitionID] = make([]int32, 5)
+			}
+			assigments[topic][partitionID][i] = int32(i)
+
+		}
+		// log.Printf("Iteration %d", i)
+		// log.Println(assigments[topic])
+
+	}
+	for k, v := range assigments {
+		log.Printf("For topic: %s\nassigment:%v", k, v)
+	}
+
+	// err := admin.AlterPartitionReassignments()
+	if err != nil {
+		return err
+	}
+	return nil
+}
