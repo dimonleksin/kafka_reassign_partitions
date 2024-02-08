@@ -3,16 +3,16 @@ package pkg
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 
 	"github.com/IBM/sarama"
+	"github.com/cheggaaa/pb/v3"
 )
 
 // string of topics contains: topics.name-partition-replicas(brokerId)
 
 type Cluster struct {
-	Brokers [5]Topics
+	Brokers         []Topics
+	NumberOfBrokers int
 }
 type Topics struct {
 	Topic   map[int]string
@@ -28,7 +28,13 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin) (err error) {
 	if err != nil {
 		return err
 	}
-	for i := 0; i < 5; i++ {
+
+	if len(c.Brokers) == 0 {
+		log.Println(len(c.Brokers))
+		c.Brokers = make([]Topics, c.NumberOfBrokers)
+	}
+
+	for i := 0; i < c.NumberOfBrokers; i++ {
 		c.Brokers[i].Topic = make(map[int]string)
 	}
 
@@ -83,7 +89,7 @@ func (c Cluster) CreateRebalancePlane() (result Cluster, err error) {
 
 	// log.Printf("Sorted topic list: %v", allTopicsSort)
 
-	result, err = makePlane(allTopicsSort)
+	result, err = makePlane(allTopicsSort, c.NumberOfBrokers)
 	if err != nil {
 		return result, nil
 	}
@@ -91,45 +97,35 @@ func (c Cluster) CreateRebalancePlane() (result Cluster, err error) {
 	return result, nil
 }
 
-func (c Cluster) Rebalance(admin sarama.ClusterAdmin) error {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int) (err error) {
 	var (
-		topic       string
-		partitionID int
-		err         error
-		// assigment   []int32
+		counter float32
+		// percent  float32
+		// cc       float32
+		// progress string
 	)
-
-	assigments := make(map[string][][]int32)
-
-	for i := 1; i < len(c.Brokers); i++ {
-		for _, t := range c.Brokers[i].Topic {
-			tmp := strings.Split(t, "-")
-			topic = tmp[0]
-			partitionID, err = strconv.Atoi(tmp[1])
-			if err != nil {
-				return err
-			}
-			if len(assigments[topic]) == 0 {
-				// log.Println("Make slices")
-				assigments[topic] = make([][]int32, 63)
-			}
-			if len(assigments[topic][partitionID]) == 0 {
-				assigments[topic][partitionID] = make([]int32, 5)
-			}
-			assigments[topic][partitionID][i] = int32(i)
-
-		}
-		// log.Printf("Iteration %d", i)
-		// log.Println(assigments[topic])
-
-	}
-	for k, v := range assigments {
-		log.Printf("For topic: %s\nassigment:%v", k, v)
-	}
-
-	// err := admin.AlterPartitionReassignments()
+	fmt.Println()
+	log.Println("Start rebalance...")
+	// log.Println(c)
+	plane, err := c.ExtructPlane(numberOfTopics)
+	// _, err = c.ExtructPlane(numberOfTopics)
 	if err != nil {
 		return err
+	}
+	counter = float32(len(plane))
+	bar := pb.StartNew(int(counter))
+	defer bar.Finish()
+	// percent = counter / 100
+	// log.Println(counter, percent)
+	for k, v := range plane {
+		err = admin.AlterPartitionReassignments(k, v)
+		if err != nil {
+			return err
+		}
+		bar.Increment()
+		// cc++
+		// progress = fmt.Sprintf("%.2f", cc/percent)
+		// fmt.Print("\r", progress, "%")
 	}
 	return nil
 }

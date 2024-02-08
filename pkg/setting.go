@@ -46,7 +46,7 @@ func (s *Settings) GetSettings() error {
 
 	s.Action = *flag.String(
 		"action",
-		"move",
+		"rebalance",
 		"--action [string] Set action of u needed (move/return/rebalance)",
 	)
 
@@ -133,9 +133,23 @@ func (s Settings) verifyConf() error {
 func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 
 	config := sarama.NewConfig()
+	if len(s.User) != 0 {
+		config.Net.SASL = struct {
+			Enable                   bool
+			Mechanism                sarama.SASLMechanism
+			Version                  int16
+			Handshake                bool
+			AuthIdentity             string
+			User                     string
+			Password                 string
+			SCRAMAuthzID             string
+			SCRAMClientGeneratorFunc func() sarama.SCRAMClient
+			TokenProvider            sarama.AccessTokenProvider
+			GSSAPI                   sarama.GSSAPIConfig
+		}{Enable: true, Mechanism: sarama.SASLMechanism("SASL-SCRAM-SHA256"), User: s.User, Password: s.Passwd}
+	}
 	config.Version = sarama.V2_8_0_0
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
-
 	if err != nil {
 		return nil, err
 	}
