@@ -64,14 +64,13 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin) (err error) {
 	return nil
 }
 
-func (c Cluster) CreateRebalancePlane() (result Cluster, err error) {
+func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 	var (
 		allTopics     map[int]string
 		allTopicsSort map[int]string
 		leaders       int
 		counter       int
 	)
-
 	allTopics = make(map[int]string)
 
 	for _, v := range c.Brokers {
@@ -89,11 +88,10 @@ func (c Cluster) CreateRebalancePlane() (result Cluster, err error) {
 
 	// log.Printf("Sorted topic list: %v", allTopicsSort)
 
-	result, err = makePlane(allTopicsSort, c.NumberOfBrokers)
+	result, err = makePlane(allTopicsSort, c.NumberOfBrokers, to)
 	if err != nil {
 		return result, nil
 	}
-
 	return result, nil
 }
 

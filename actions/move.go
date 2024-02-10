@@ -7,40 +7,40 @@ import (
 	"github.com/dimonleksin/kafka_reasign_partition/pkg"
 )
 
-func Reasign(settings pkg.Settings) {
+func MoveTopic(settings pkg.Settings) (err error) {
 	var (
-		err            error
-		RebalancePlane pkg.Cluster
+		responce       string
 		numberOfTopics int
 		l              int
-		responce       string
 	)
-
 	admin, err := settings.Conf()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer admin.Close()
 
+	defer admin.Close()
 	r := pkg.Cluster{}
 	err = r.GetNumberOfBrokers(admin)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = r.GetCurrentBalance(admin)
+	if r.NumberOfBrokers < len(settings.To) {
+		return fmt.Errorf("current number of brokers(%d) > value of --to (%d)", r.NumberOfBrokers, len(settings.To))
+	}
+	err = r.DescribeTopic(admin, *settings.Topic)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	RebalancePlane, err = r.CreateRebalancePlane(nil)
+	plane, err := r.CreateRebalancePlane(settings.To)
 	if err != nil {
 		log.Fatal(err)
 	}
-	r = RebalancePlane
-
-	fmt.Println()
-
+	r = plane
 	for i, v := range r.Brokers {
+		// for _, t := range v.Topic {
+		// 	log.Printf("After rebalance inside broker %d contains %v", i, t)
+		// }
 		l = len(v.Topic)
 		numberOfTopics += l
 		log.Printf("After rebalance inside broker %d contains %d topics", i, l)
@@ -62,5 +62,5 @@ func Reasign(settings pkg.Settings) {
 	} else {
 		fmt.Print("So, goodby")
 	}
-
+	return nil
 }

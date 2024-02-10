@@ -46,30 +46,51 @@ func sortTopicMap(topics map[int]string) (sortedTopics map[int]string, err error
 	return sortedTopics, nil
 }
 
+func makeCounter(to []int) (newI []int) {
+	tmp := to[0]
+	to[0] = to[1]
+	to[1] = to[2]
+	to[2] = tmp
+	return to
+}
+
 // Maked plane for rebalance
-func makePlane(topics map[int]string, nob int) (result Cluster, err error) {
+// nob - Number Of Brokers
+func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err error) {
 	counter := 1
+	if to != nil {
+		counter = to[0]
+	}
 
 	if len(result.Brokers) == 0 {
 		result.Brokers = make([]Topics, nob)
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < nob; i++ {
 		result.Brokers[i].Topic = make(map[int]string)
 	}
 
 	for i := 0; i < len(topics); i++ {
-		if counter == 5 {
+		if counter == nob {
 			counter = 1
 		}
+		if to != nil {
+			counter = to[0]
+		}
+
 		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
 		if err != nil {
 			return result, err
 		}
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
 			// log.Printf("Founded dublicate: %s", topics[i][0:len(topics[i])-2])
-			counter++
-			if counter == 5 {
+			if to == nil {
+				counter++
+			} else {
+				counter = to[0]
+				to = makeCounter(to)
+			}
+			if counter == nob {
 				counter = 1
 			}
 		}
@@ -78,7 +99,12 @@ func makePlane(topics map[int]string, nob int) (result Cluster, err error) {
 		}
 
 		result.Brokers[counter].Topic[i] = topics[i]
-		counter++
+		if to == nil {
+			counter++
+		} else {
+			counter = to[0]
+			to = makeCounter(to)
+		}
 	}
 
 	return result, nil
