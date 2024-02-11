@@ -25,7 +25,8 @@ type Settings struct {
 	To       []int
 	H        *bool
 	Help     *bool
-	Topic    *string
+	TopicS   *string
+	Topics   []string
 }
 
 func (s *Settings) GetSettings() error {
@@ -83,20 +84,23 @@ func (s *Settings) GetSettings() error {
 		"-h/--help for print help",
 	)
 
-	s.Topic = flag.String(
-		"topic",
+	s.TopicS = flag.String(
+		"TopicS",
 		"",
-		"--topic [string] for set topic name for move",
+		"--TopicS [string] for set TopicS name for move",
 	)
 
 	flag.Parse()
 
 	if !*s.H && !*s.Help {
 		if *s.Action == "move" {
-			err = s.parsingTo(",")
+			err = s.parsingTo(sep)
 			if err != nil {
 				return err
 			}
+		}
+		if len(*s.TopicS) > 0 {
+			s.parsingTopics(sep)
 		}
 		s.parsingBrokers(sep)
 		err = s.verifyConf()
@@ -129,6 +133,11 @@ func (s *Settings) parsingBrokers(separator string) {
 	s.Brokers = append(s.Brokers, t...)
 }
 
+func (s *Settings) parsingTopics(separator string) {
+	t := strings.Split(*s.TopicS, separator)
+	s.Brokers = append(s.Topics, t...)
+}
+
 func (s Settings) verifyConf() error {
 	log.Printf("start verify configs. Bootstrap server %v", s.Brokers)
 	// log.Println(*s.ToS)
@@ -143,12 +152,12 @@ func (s Settings) verifyConf() error {
 				}
 			}
 		}
-		if len(*s.Topic) > 0 {
+		if len(*s.TopicS) > 0 {
 			if *s.From != -1 || *s.Action != "move" {
-				return fmt.Errorf("if u set key --topic, u can't set key --from or set key --action not aqual 'nove'")
+				return fmt.Errorf("if u set key --TopicS, u can't set key --from or set key --action not aqual 'nove'")
 			}
 		}
-		if *s.From != -1 || len(*s.Topic) > 0 {
+		if *s.From != -1 || len(*s.TopicS) > 0 {
 			if len(s.To) < NumberOfBrockers {
 				return fmt.Errorf("flag --to want contains min %d, have %d", NumberOfBrockers, len(s.To))
 			}

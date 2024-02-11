@@ -24,7 +24,7 @@ func main() {
 	case "rebalance":
 		actions.Reasign(settings)
 	case "move":
-		if len(*settings.Topic) != 0 {
+		if len(settings.Topics) != 0 {
 			err := actions.MoveTopic(settings)
 			if err != nil {
 				log.Fatal(err)

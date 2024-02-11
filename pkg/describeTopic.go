@@ -6,8 +6,8 @@ import (
 	"github.com/IBM/sarama"
 )
 
-func (c *Cluster) DescribeTopic(admin sarama.ClusterAdmin, topic string) (err error) {
-	metadata, err := admin.DescribeTopics([]string{topic})
+func (c *Cluster) DescribeTopic(admin sarama.ClusterAdmin, topic []string) (err error) {
+	metadata, err := admin.DescribeTopics(topic)
 	if err != nil {
 		return err
 	}

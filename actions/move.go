@@ -28,7 +28,7 @@ func MoveTopic(settings pkg.Settings) (err error) {
 	if r.NumberOfBrokers < len(settings.To) {
 		return fmt.Errorf("current number of brokers(%d) > value of --to (%d)", r.NumberOfBrokers, len(settings.To))
 	}
-	err = r.DescribeTopic(admin, *settings.Topic)
+	err = r.DescribeTopic(admin, settings.Topics)
 	if err != nil {
 		log.Fatal(err)
 	}

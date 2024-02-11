@@ -46,7 +46,7 @@ func sortTopicMap(topics map[int]string) (sortedTopics map[int]string, err error
 	return sortedTopics, nil
 }
 
-func makeCounter(to []int) (newI []int) {
+func shufleCounter(to []int) (newI []int) {
 	tmp := to[0]
 	to[0] = to[1]
 	to[1] = to[2]
@@ -88,7 +88,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 				counter++
 			} else {
 				counter = to[0]
-				to = makeCounter(to)
+				to = shufleCounter(to)
 			}
 			if counter == nob {
 				counter = 1
@@ -103,7 +103,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 			counter++
 		} else {
 			counter = to[0]
-			to = makeCounter(to)
+			to = shufleCounter(to)
 		}
 	}
 
