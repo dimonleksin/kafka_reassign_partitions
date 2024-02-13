@@ -19,11 +19,9 @@ func main() {
 		pkg.PrintHelp()
 		os.Exit(0)
 	}
-
-	switch *settings.Action {
-	case "rebalance":
+	if *settings.Action == "rebalance" || *settings.Action == "move" && *settings.From != -1 {
 		actions.Reasign(settings)
-	case "move":
+	} else if *settings.Action == "move" && *settings.From == -1 {
 		if len(settings.Topics) != 0 {
 			err := actions.MoveTopic(settings)
 			if err != nil {

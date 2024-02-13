@@ -46,6 +46,7 @@ func sortTopicMap(topics map[int]string) (sortedTopics map[int]string, err error
 	return sortedTopics, nil
 }
 
+// Shufle current broker in broker list from --to for uniform reasign
 func shufleCounter(to []int) (newI []int) {
 	tmp := to[0]
 	to[0] = to[1]
@@ -54,8 +55,7 @@ func shufleCounter(to []int) (newI []int) {
 	return to
 }
 
-// Maked plane for rebalance
-// nob - Number Of Brokers
+// Maked plane for rebalance | nob - Number Of Brokers
 func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err error) {
 	counter := 1
 	if to != nil {
@@ -65,7 +65,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 	if len(result.Brokers) == 0 {
 		result.Brokers = make([]Topics, nob)
 	}
-
+	// allocating memory for all brokers in map
 	for i := 0; i < nob; i++ {
 		result.Brokers[i].Topic = make(map[int]string)
 	}
@@ -78,15 +78,17 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 			counter = to[0]
 		}
 
+		// Getting role from topic: 1 - leader, 2 and other - replicas
 		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
 		if err != nil {
 			return result, err
 		}
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
-			// log.Printf("Founded dublicate: %s", topics[i][0:len(topics[i])-2])
+			// if --to not set, reasign for all brokers
 			if to == nil {
 				counter++
 			} else {
+				// if --to seted, reasign to brokers from --to
 				counter = to[0]
 				to = shufleCounter(to)
 			}
@@ -94,6 +96,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 				counter = 1
 			}
 		}
+
 		if currentRole == 1 {
 			result.Brokers[counter].Leaders += 1
 		}

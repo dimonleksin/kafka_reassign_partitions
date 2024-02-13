@@ -85,9 +85,9 @@ func (s *Settings) GetSettings() error {
 	)
 
 	s.TopicS = flag.String(
-		"TopicS",
+		"topic",
 		"",
-		"--TopicS [string] for set TopicS name for move",
+		"--topic [string] for set TopicS name for move",
 	)
 
 	flag.Parse()
@@ -123,7 +123,7 @@ func (s *Settings) parsingTo(separator string) error {
 		}
 
 	} else {
-		return fmt.Errorf("flag --to want contains min %d, have %s", NumberOfBrockers, *s.ToS)
+		return fmt.Errorf("flag --to want contains min %d, have %s. -h/--help for more information", NumberOfBrockers, *s.ToS)
 	}
 	return nil
 }
@@ -135,7 +135,7 @@ func (s *Settings) parsingBrokers(separator string) {
 
 func (s *Settings) parsingTopics(separator string) {
 	t := strings.Split(*s.TopicS, separator)
-	s.Brokers = append(s.Topics, t...)
+	s.Topics = append(s.Topics, t...)
 }
 
 func (s Settings) verifyConf() error {

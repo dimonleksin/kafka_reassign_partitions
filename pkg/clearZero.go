@@ -43,19 +43,22 @@ func clearZeroValue(plane map[string][][]int32) (clearPlane map[string][][]int32
 				}
 			}
 		}
-		// log.Println(tmp[t])
 	}
 	// log.Println(tmp)
 	for t, p := range tmp {
+		// log.Println(t, len(p))
 		if len(clearPlane[t]) == 0 {
 			clearPlane[t] = make([][]int32, len(p))
 		}
 		for partition, brokers := range p {
+			// log.Printf("Partition: %d", partition)
 			if len(clearPlane[t][partition]) == 0 {
+
 				clearPlane[t][partition] = make([]int32, len(brokers))
-				// log.Println(len(brokers))
+
 			}
 			for k, b := range brokers {
+				// log.Printf("brokers: %v, %v", k, b)
 				if b != 0 {
 					clearPlane[t][partition][k] = b
 				}

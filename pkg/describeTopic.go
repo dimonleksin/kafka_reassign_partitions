@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 )
 
+// Return current assign topics with format 'topic.name-partition_number-role'
 func (c *Cluster) DescribeTopic(admin sarama.ClusterAdmin, topic []string) (err error) {
 	metadata, err := admin.DescribeTopics(topic)
 	if err != nil {

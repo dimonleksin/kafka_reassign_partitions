@@ -27,12 +27,15 @@ func Reasign(settings pkg.Settings) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = r.GetCurrentBalance(admin)
+	err = r.GetCurrentBalance(admin, *settings.From)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	RebalancePlane, err = r.CreateRebalancePlane(nil)
+	if len(settings.To) == 0 {
+		RebalancePlane, err = r.CreateRebalancePlane(nil)
+	} else {
+		RebalancePlane, err = r.CreateRebalancePlane(settings.To)
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
