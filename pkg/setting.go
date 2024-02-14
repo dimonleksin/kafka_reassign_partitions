@@ -192,9 +192,9 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 			SCRAMClientGeneratorFunc func() sarama.SCRAMClient
 			TokenProvider            sarama.AccessTokenProvider
 			GSSAPI                   sarama.GSSAPIConfig
-		}{Enable: true, Mechanism: sarama.SASLMechanism("SASL-SCRAM-SHA256"), User: *s.User, Password: *s.Passwd}
+		}{Enable: true, Mechanism: sarama.SASLMechanism("SCRAM-SHA-256"), User: *s.User, Password: *s.Passwd}
 	}
-	config.Version = sarama.V2_8_0_0
+	// config.Version = sarama.V2_8_0_0
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
 	if err != nil {
 		return nil, err
