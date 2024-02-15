@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -69,7 +70,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 	for i := 0; i < nob; i++ {
 		result.Brokers[i].Topic = make(map[int]string)
 	}
-
+	// not range, because neded received topic in ascending order or sorting not working
 	for i := 0; i < len(topics); i++ {
 		if counter == nob {
 			counter = 1
@@ -83,7 +84,10 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 		if err != nil {
 			return result, err
 		}
+
+		// increment counter until broker with current replicas not fount for avoid dublications
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
+
 			// if --to not set, reasign for all brokers
 			if to == nil {
 				counter++
@@ -131,13 +135,13 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			topic = strings.Join(tmp[0:l-2], "-")
 			partitionID, err = strconv.Atoi(tmp[l-2])
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("can't parsed partition id from topic %s. Err: %v", t, err)
 			}
 			// Geting position of reasign
 			positionID, err = strconv.Atoi(tmp[l-1])
 
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("can't parsed position in assign id from topic %s. Err: %v", t, err)
 			}
 
 			if len(assigments[topic]) == 0 {
@@ -149,18 +153,18 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			assigments[topic][partitionID][positionID] = int32(i)
 		}
 	}
-	// Deleting zero value
 	plane = clearZeroValue(assigments)
 	return plane, nil
 }
 
+// addded number of brokers from cluster to struct
 func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 	var (
 		brokers []*sarama.Broker
 	)
 	brokers, _, err = admin.DescribeCluster()
 	if err != nil {
-		return err
+		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
 	c.NumberOfBrokers = len(brokers) + 1
 	log.Printf("Number of brokers:  %d", c.NumberOfBrokers)
