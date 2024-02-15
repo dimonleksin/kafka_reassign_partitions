@@ -27,6 +27,7 @@ type Settings struct {
 	Help     *bool
 	TopicS   *string
 	Topics   []string
+	Treads   *int
 }
 
 func (s *Settings) GetSettings() error {
@@ -88,6 +89,12 @@ func (s *Settings) GetSettings() error {
 		"topic",
 		"",
 		"--topic [string] for set TopicS name for move",
+	)
+
+	s.Treads = flag.Int(
+		"treads",
+		1,
+		"--treads: number of treads. Default true",
 	)
 
 	flag.Parse()
@@ -172,6 +179,9 @@ func (s Settings) verifyConf() error {
 				return errors.New("username is not set. -h or --help for more details")
 			}
 		}
+		if *s.Treads < 1 {
+			return fmt.Errorf("number of treads invalid (%d<1) min number of treads: 1", *s.Treads)
+		}
 	}
 	return nil
 }
@@ -192,9 +202,11 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 			SCRAMClientGeneratorFunc func() sarama.SCRAMClient
 			TokenProvider            sarama.AccessTokenProvider
 			GSSAPI                   sarama.GSSAPIConfig
-		}{Enable: true, Mechanism: sarama.SASLMechanism("SASL-SCRAM-SHA256"), User: *s.User, Password: *s.Passwd}
+		}{Enable: true, Mechanism: sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256), User: *s.User, Password: *s.Passwd}
 	}
-	config.Version = sarama.V2_8_0_0
+
+	config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
+	// config.Version = sarama.V2_8_0_0
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
 	if err != nil {
 		return nil, err

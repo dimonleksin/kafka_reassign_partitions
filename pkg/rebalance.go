@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/cheggaaa/pb/v3"
@@ -104,9 +105,9 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 	return result, nil
 }
 
-func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int) (err error) {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads int) (err error) {
 	var (
-		counter float32
+		counter int
 	)
 	fmt.Println()
 	log.Println("Start rebalance...")
@@ -117,15 +118,38 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int) (err e
 		return err
 	}
 
-	counter = float32(len(plane))
-	bar := pb.StartNew(int(counter))
+	counter = len(plane)
+	bar := pb.StartNew(counter)
 	defer bar.Finish()
+
+	ch := make(chan error, treads)
+
+	log.Printf("Start time: %v", time.Now())
 	for k, v := range plane {
-		err = admin.AlterPartitionReassignments(k, v)
-		if err != nil {
-			return err
-		}
-		bar.Increment()
+		go func(topic string, assign [][]int32, ch chan error) {
+			log.Printf("Start gorutine for topic %s", topic)
+			err = admin.AlterPartitionReassignments(topic, assign)
+			if err != nil {
+				ch <- fmt.Errorf("error reassign topic: %s. Err: %v", topic, err)
+			}
+			ch <- nil
+		}(k, v, ch)
 	}
+
+	for a := range ch {
+		bar.Increment()
+		counter--
+
+		if a != nil {
+			// close(ch)
+			return a
+		}
+
+		if counter == 0 {
+			close(ch)
+			log.Printf("End time: %v", time.Now())
+		}
+	}
+
 	return nil
 }

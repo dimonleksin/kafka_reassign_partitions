@@ -54,11 +54,11 @@ func Reasign(settings pkg.Settings) {
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)
 	if err != nil {
-		log.Fatal("Error read you responce")
+		log.Fatal("Error read you responce", err)
 	}
 
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics)
+		err = r.Rebalance(admin, numberOfTopics, *settings.Treads)
 		if err != nil {
 			log.Fatal(err)
 		}

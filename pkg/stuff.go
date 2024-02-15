@@ -119,7 +119,6 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 		partitionID int
 		positionID  int
 		l           int
-		// assigment   []int32
 	)
 	log.Println("Starting executing plane")
 	assigments := make(map[string][][]int32)
@@ -130,9 +129,7 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			l = len(tmp)
 			// Geting topic name
 			topic = strings.Join(tmp[0:l-2], "-")
-			// Geting partition id
 			partitionID, err = strconv.Atoi(tmp[l-2])
-			// log.Println(topic, l, partitionID)
 			if err != nil {
 				return nil, err
 			}
@@ -144,7 +141,6 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			}
 
 			if len(assigments[topic]) == 0 {
-				// log.Println("Make slices")
 				assigments[topic] = make([][]int32, numberOfTopics)
 			}
 			if len(assigments[topic][partitionID]) == 0 {

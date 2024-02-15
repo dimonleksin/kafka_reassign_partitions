@@ -55,7 +55,7 @@ func MoveTopic(settings pkg.Settings) (err error) {
 	}
 
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics)
+		err = r.Rebalance(admin, numberOfTopics, *settings.Treads)
 		if err != nil {
 			log.Fatal(err)
 		}
