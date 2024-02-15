@@ -9,17 +9,6 @@ import (
 	"github.com/cheggaaa/pb/v3"
 )
 
-// string of topics contains: topics.name-partition-replicas(brokerId)
-
-type Cluster struct {
-	Brokers         []Topics
-	NumberOfBrokers int
-}
-type Topics struct {
-	Topic   map[int]string
-	Leaders int
-}
-
 // Returning list of brokers with topic.name-partitions-replicaAssigment
 func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err error) {
 
@@ -127,7 +116,6 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 	log.Printf("Start time: %v", time.Now())
 	for k, v := range plane {
 		go func(topic string, assign [][]int32, ch chan error) {
-			log.Printf("Start gorutine for topic %s", topic)
 			err = admin.AlterPartitionReassignments(topic, assign)
 			if err != nil {
 				ch <- fmt.Errorf("error reassign topic: %s. Err: %v", topic, err)
@@ -141,7 +129,6 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 		counter--
 
 		if a != nil {
-			// close(ch)
 			return a
 		}
 

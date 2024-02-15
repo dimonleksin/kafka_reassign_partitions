@@ -14,22 +14,6 @@ import (
 // NumberOfBrockers need equal to replication factor in u cluster
 const NumberOfBrockers int = 3
 
-type Settings struct {
-	BrokersS *string
-	Brokers  []string
-	Action   *string
-	User     *string
-	Passwd   *string
-	From     *int
-	ToS      *string
-	To       []int
-	H        *bool
-	Help     *bool
-	TopicS   *string
-	Topics   []string
-	Treads   *int
-}
-
 func (s *Settings) GetSettings() error {
 	var (
 		err error

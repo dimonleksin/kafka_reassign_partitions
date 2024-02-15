@@ -14,6 +14,7 @@ func PrintHelp() {
 		"\tif u set password without --user, this call panic\n\n" +
 		"--to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3" +
 		"--from [int] set source broker id" +
+		"--treads [int] seted number of treads for reassign" +
 		"-h or --help for print this help"
 	fmt.Println(textHelp)
 }

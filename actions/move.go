@@ -38,9 +38,6 @@ func MoveTopic(settings pkg.Settings) (err error) {
 	}
 	r = plane
 	for i, v := range r.Brokers {
-		// for _, t := range v.Topic {
-		// 	log.Printf("After rebalance inside broker %d contains %v", i, t)
-		// }
 		l = len(v.Topic)
 		numberOfTopics += l
 		log.Printf("After rebalance inside broker %d contains %d topics", i, l)
