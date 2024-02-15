@@ -78,16 +78,13 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 		if to != nil {
 			counter = to[0]
 		}
-
 		// Getting role from topic: 1 - leader, 2 and other - replicas
 		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
 		if err != nil {
 			return result, err
 		}
-
 		// increment counter until broker with current replicas not fount for avoid dublications
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
-
 			// if --to not set, reasign for all brokers
 			if to == nil {
 				counter++
@@ -100,11 +97,9 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 				counter = 1
 			}
 		}
-
 		if currentRole == 1 {
 			result.Brokers[counter].Leaders += 1
 		}
-
 		result.Brokers[counter].Topic[i] = topics[i]
 		if to == nil {
 			counter++
@@ -122,26 +117,15 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 		topic       string
 		partitionID int
 		positionID  int
-		l           int
 	)
 	log.Println("Starting executing plane")
 	assigments := make(map[string][][]int32)
 
 	for i := 1; i < len(c.Brokers); i++ {
 		for _, t := range c.Brokers[i].Topic {
-			tmp := strings.Split(t, "-")
-			l = len(tmp)
-			// Geting topic name
-			topic = strings.Join(tmp[0:l-2], "-")
-			partitionID, err = strconv.Atoi(tmp[l-2])
+			topic, partitionID, positionID, err = parsTopic(t)
 			if err != nil {
-				return nil, fmt.Errorf("can't parsed partition id from topic %s. Err: %v", t, err)
-			}
-			// Geting position of reasign
-			positionID, err = strconv.Atoi(tmp[l-1])
-
-			if err != nil {
-				return nil, fmt.Errorf("can't parsed position in assign id from topic %s. Err: %v", t, err)
+				return nil, err
 			}
 
 			if len(assigments[topic]) == 0 {
