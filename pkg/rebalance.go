@@ -99,7 +99,7 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 		counter int
 	)
 	fmt.Println()
-	log.Println("Start rebalance...")
+	log.Println("Starting rebalance...")
 	// log.Println(c)
 	plane, err := c.ExtructPlane(numberOfTopics)
 	// _, err = c.ExtructPlane(numberOfTopics)
@@ -133,8 +133,9 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 		}
 
 		if counter == 0 {
-			close(ch)
 			log.Printf("End time: %v", time.Now())
+			time.Sleep(time.Millisecond * 100)
+			close(ch)
 		}
 	}
 

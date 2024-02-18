@@ -174,23 +174,14 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 
 	config := sarama.NewConfig()
 	if len(*s.User) != 0 {
-		config.Net.SASL = struct {
-			Enable                   bool
-			Mechanism                sarama.SASLMechanism
-			Version                  int16
-			Handshake                bool
-			AuthIdentity             string
-			User                     string
-			Password                 string
-			SCRAMAuthzID             string
-			SCRAMClientGeneratorFunc func() sarama.SCRAMClient
-			TokenProvider            sarama.AccessTokenProvider
-			GSSAPI                   sarama.GSSAPIConfig
-		}{Enable: true, Mechanism: sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256), User: *s.User, Password: *s.Passwd}
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
+		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
+		config.Net.SASL.User = *s.User
+		config.Net.SASL.Password = *s.Passwd
+		config.Net.SASL.Enable = true
 	}
 
-	config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
-	// config.Version = sarama.V2_8_0_0
+	config.Version = sarama.V3_6_0_0
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
 	if err != nil {
 		return nil, err

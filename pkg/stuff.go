@@ -137,7 +137,10 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			assigments[topic][partitionID][positionID] = int32(i)
 		}
 	}
-	plane = clearZeroValue(assigments)
+	plane, err = clearZeroValue(assigments)
+	if err != nil {
+		return nil, err
+	}
 	return plane, nil
 }
 
