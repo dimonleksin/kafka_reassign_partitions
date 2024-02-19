@@ -111,33 +111,38 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 	bar := pb.StartNew(counter)
 	defer bar.Finish()
 
-	ch := make(chan error, treads)
+	errCh := make(chan error, treads*2)
+	topicCh := make(chan string, treads*2)
+	newAssignCh := make(chan [][]int32, treads*2)
 
 	log.Printf("Start time: %v", time.Now())
-	for k, v := range plane {
-		go func(topic string, assign [][]int32, ch chan error) {
-			err = admin.AlterPartitionReassignments(topic, assign)
-			if err != nil {
-				ch <- fmt.Errorf("error reassign topic: %s. Err: %v", topic, err)
-			}
-			ch <- nil
-		}(k, v, ch)
-	}
 
-	for a := range ch {
-		bar.Increment()
-		counter--
-
-		if a != nil {
-			return a
+	go func(topicCh chan string, newAssignCh chan [][]int32, errCh chan error, plane map[string][][]int32, bar *pb.ProgressBar) {
+		for k, v := range plane {
+			topicCh <- k
+			newAssignCh <- v
+			bar.Increment()
 		}
 
-		if counter == 0 {
-			log.Printf("End time: %v", time.Now())
-			time.Sleep(time.Millisecond * 100)
-			close(ch)
+		close(topicCh)
+		close(newAssignCh)
+		close(errCh)
+	}(topicCh, newAssignCh, errCh, plane, bar)
+	for i := 0; i < treads; i++ {
+		go reassign(admin, topicCh, newAssignCh, errCh, i)
+	}
+	for k := range errCh {
+		if k != nil {
+			return err
 		}
 	}
 
+	log.Printf("End time: %v", time.Now())
 	return nil
+}
+
+func reassign(admin sarama.ClusterAdmin, topic chan string, newAssign chan [][]int32, err chan error, i int) {
+	for {
+		err <- admin.AlterPartitionReassignments(<-topic, <-newAssign)
+	}
 }
