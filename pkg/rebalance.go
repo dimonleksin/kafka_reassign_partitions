@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -94,9 +95,12 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 	return result, nil
 }
 
-func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads int) (err error) {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int) (err error) {
 	var (
 		counter int
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		errors  []error
 	)
 	fmt.Println()
 	log.Println("Starting rebalance...")
@@ -111,38 +115,81 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, treads
 	bar := pb.StartNew(counter)
 	defer bar.Finish()
 
-	errCh := make(chan error, treads*2)
-	topicCh := make(chan string, treads*2)
-	newAssignCh := make(chan [][]int32, treads*2)
+	errCh := make(chan error)
+	topicCh := make(chan string, Treads)
+	newAssignCh := make(chan [][]int32, Treads)
 
 	log.Printf("Start time: %v", time.Now())
 
-	go func(topicCh chan string, newAssignCh chan [][]int32, errCh chan error, plane map[string][][]int32, bar *pb.ProgressBar) {
+	wg.Add(Treads)
+	go func(topicCh chan string,
+		newAssignCh chan [][]int32,
+		errCh chan error,
+		plane map[string][][]int32,
+		counter *int,
+		wg *sync.WaitGroup,
+	) {
 		for k, v := range plane {
 			topicCh <- k
 			newAssignCh <- v
-			bar.Increment()
 		}
 
+		for {
+			if *counter < -1 {
+				break
+			}
+			fmt.Println("\rvait all gorutines", *counter)
+			time.Sleep(100 * time.Millisecond)
+			continue
+		}
+		wg.Wait()
+		log.Println("closing chanels")
 		close(topicCh)
 		close(newAssignCh)
 		close(errCh)
-	}(topicCh, newAssignCh, errCh, plane, bar)
-	for i := 0; i < treads; i++ {
-		go reassign(admin, topicCh, newAssignCh, errCh, i)
-	}
-	for k := range errCh {
-		if k != nil {
-			return err
-		}
+	}(topicCh, newAssignCh, errCh, plane, &counter, &wg)
+
+	for i := 0; i < Treads; i++ {
+		go reassign(admin, topicCh, newAssignCh, errCh, &counter, &mu, bar, &wg)
 	}
 
+	for k := range errCh {
+		if k != nil {
+		}
+	}
+	// wg.Wait()
+	// log.Println("closing chanels")
+	// close(topicCh)
+	// close(newAssignCh)
+	// close(errCh)
+	log.Println(errors)
 	log.Printf("End time: %v", time.Now())
 	return nil
 }
 
-func reassign(admin sarama.ClusterAdmin, topic chan string, newAssign chan [][]int32, err chan error, i int) {
-	for {
-		err <- admin.AlterPartitionReassignments(<-topic, <-newAssign)
+func reassign(
+	admin sarama.ClusterAdmin,
+	topic chan string,
+	newAssign chan [][]int32,
+	err chan error,
+	counter *int,
+	mu *sync.Mutex,
+	bar *pb.ProgressBar,
+	wg *sync.WaitGroup,
+) {
+	for *counter > 0 {
+		er := admin.AlterPartitionReassignments(<-topic, <-newAssign)
+		if err != nil {
+			err <- er
+		}
+		mu.Lock()
+		bar.Increment()
+		*counter--
+		mu.Unlock()
 	}
+	mu.Lock()
+	fmt.Println("Gorutine stoped")
+	*counter--
+	mu.Unlock()
+	wg.Done()
 }

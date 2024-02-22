@@ -1,5 +1,7 @@
 package pkg
 
+import "github.com/IBM/sarama"
+
 // string of topics contains: topics.name-partition-replicas(brokerId)
 
 type Cluster struct {
@@ -12,17 +14,19 @@ type Topics struct {
 }
 
 type Settings struct {
-	BrokersS *string
-	Brokers  []string
-	Action   *string
-	User     *string
-	Passwd   *string
-	From     *int
-	ToS      *string
-	To       []int
-	H        *bool
-	Help     *bool
-	TopicS   *string
-	Topics   []string
-	Treads   *int
+	BrokersS   *string
+	Brokers    []string
+	ApiVersion sarama.KafkaVersion
+	Action     *string
+	User       *string
+	Passwd     *string
+	From       *int
+	ToS        *string
+	To         []int
+	H          *bool
+	Help       *bool
+	TopicS     *string
+	Topics     []string
+	Treads     *int
+	Version    *bool
 }

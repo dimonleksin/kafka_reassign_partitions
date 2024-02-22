@@ -81,7 +81,17 @@ func (s *Settings) GetSettings() error {
 		"--treads: number of treads. Default true",
 	)
 
+	s.Version = flag.Bool(
+		"version",
+		false,
+		"--version fro print current version of krpg",
+	)
+
 	flag.Parse()
+
+	if *s.Version {
+		printVersion()
+	}
 
 	if !*s.H && !*s.Help {
 		if *s.Action == "move" {

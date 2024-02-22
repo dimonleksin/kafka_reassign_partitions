@@ -83,6 +83,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 		if err != nil {
 			return result, err
 		}
+
 		// increment counter until broker with current replicas not fount for avoid dublications
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
 			// if --to not set, reasign for all brokers
