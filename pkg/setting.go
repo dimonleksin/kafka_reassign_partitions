@@ -183,6 +183,7 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 
 	config := sarama.NewConfig()
 	if len(*s.User) != 0 {
+
 		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
 		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
 		config.Net.SASL.User = *s.User
