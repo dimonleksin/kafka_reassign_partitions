@@ -28,7 +28,7 @@ func searchForMove(m map[int32][]int32, key int32) bool {
 	return false
 }
 
-func parsTopic(topic string) (topicName string, partitionID, positionID int, err error) {
+func parsTopicParams(topic string) (topicName string, partitionID, positionID int, err error) {
 	tmp := strings.Split(topic, "-")
 	l := len(tmp)
 	// Geting topic name

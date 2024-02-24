@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -119,12 +118,12 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 		partitionID int
 		positionID  int
 	)
-	log.Println("Starting executing plane")
+	fmt.Println("Starting executing plane")
 	assigments := make(map[string][][]int32)
 
 	for i := 1; i < len(c.Brokers); i++ {
 		for _, t := range c.Brokers[i].Topic {
-			topic, partitionID, positionID, err = parsTopic(t)
+			topic, partitionID, positionID, err = parsTopicParams(t)
 			if err != nil {
 				return nil, err
 			}
@@ -155,6 +154,6 @@ func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
 	c.NumberOfBrokers = len(brokers) + 1
-	log.Printf("Number of brokers:  %d", c.NumberOfBrokers)
+	fmt.Printf("Number of brokers:  %d", c.NumberOfBrokers)
 	return nil
 }

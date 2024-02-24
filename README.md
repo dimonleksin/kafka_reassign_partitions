@@ -32,10 +32,15 @@ Sometimes i'm needed remove one ore more nodes from cluster of kafka for work, u
 + --version prints the version of this
 + -h or --help for print this help
 
+
+## Multi treads
+
+If you set --treads > 1, process of reassign division and running parrallels, one topic(with all self partitions) - one gorutines(tread)
+
 ## Build KRPG
 
 ### For linux
-    GOOS=linux GOARCH=amd64 GOGCC=false go build -o krpg
+    GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o krpg
 
 ### For windows
     GOOS=windows GOARCH=amd64 go build -o krpg.exe

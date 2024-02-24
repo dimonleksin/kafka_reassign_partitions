@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"log"
 )
 
 // Deleting zero value from plane
@@ -10,12 +9,13 @@ func clearZeroValue(plane map[string][][]int32) (clearPlane map[string][][]int32
 	var (
 		tmp map[string]map[int]map[int32]int32
 	)
-	log.Println("Clearing plane from zero value")
+	fmt.Println("Clearing plane from zero value")
 
 	tmp, err = makeMapFromPlane(plane)
 	if err != nil {
 		return nil, err
 	}
+	// fmt.Println(tmp)
 	clearPlane = make(map[string][][]int32)
 
 	for t, p := range tmp {
@@ -23,6 +23,7 @@ func clearZeroValue(plane map[string][][]int32) (clearPlane map[string][][]int32
 			clearPlane[t] = make([][]int32, len(p))
 		}
 		for partition, brokers := range p {
+			// fmt.Printf("\nTopic: %s - partition: %d\n", t, partition)
 			if len(clearPlane[t][partition]) == 0 {
 
 				clearPlane[t][partition] = make([]int32, len(brokers))

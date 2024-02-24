@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -140,8 +139,8 @@ func (s *Settings) parsingTopics(separator string) {
 }
 
 func (s Settings) verifyConf() error {
-	log.Printf("start verify configs. Bootstrap server %v", s.Brokers)
-	// log.Println(*s.ToS)
+	fmt.Printf("start verify configs. Bootstrap server %v", s.Brokers)
+	// fmt.Println(*s.ToS)
 	if !*s.H && !*s.Help {
 		if len(s.Brokers) > 0 {
 			for _, v := range s.Brokers {

@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -14,14 +13,14 @@ import (
 func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err error) {
 
 	var counter int = 0
-	log.Println("Start getting current assigment")
+	fmt.Println("Start getting current assigment")
 	topics, err := admin.ListTopics()
 	if err != nil {
 		return err
 	}
 
 	if len(c.Brokers) == 0 {
-		log.Println(len(c.Brokers))
+		fmt.Println(len(c.Brokers))
 		c.Brokers = make([]Topics, c.NumberOfBrokers)
 	}
 
@@ -30,12 +29,12 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 	}
 	// if --from not seted (equal -1) - geting current assign for all topics
 	if from == -1 {
-		for k, i := range topics {
-			for p, bs := range i.ReplicaAssignment {
-				for l, b := range bs {
-					c.Brokers[b].Topic[counter] = fmt.Sprintf("%s-%d-%d", k, p, l+1)
+		for topicName, i := range topics {
+			for partition, brokers := range i.ReplicaAssignment {
+				for l, broker := range brokers {
+					c.Brokers[broker].Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
 					if l+1 == 1 {
-						c.Brokers[b].Leaders += 1
+						c.Brokers[broker].Leaders += 1
 					}
 					counter++
 				}
@@ -59,8 +58,8 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 		}
 	}
 	for i, v := range c.Brokers {
-		log.Printf("Before rebalance inside broker %d contains %d partitions", i, len(v.Topic))
-		log.Printf("For broker %d before rebalance number by leaders %d", i, v.Leaders)
+		fmt.Printf("Before rebalance inside broker %d contains %d partitions\n", i, len(v.Topic))
+		fmt.Printf("\tFor broker %d before rebalance number by leaders %d\n", i, v.Leaders)
 		fmt.Println()
 	}
 	return nil
@@ -88,7 +87,9 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 	if err != nil {
 		return result, err
 	}
+
 	result, err = makePlane(allTopicsSort, c.NumberOfBrokers, to)
+
 	if err != nil {
 		return result, nil
 	}
@@ -98,72 +99,41 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int) (err error) {
 	var (
 		counter int
-		mu      sync.Mutex
 		wg      sync.WaitGroup
 		errors  []error
 	)
 	fmt.Println()
-	log.Println("Starting rebalance...")
-	// log.Println(c)
+	fmt.Println("Starting rebalance...")
 	plane, err := c.ExtructPlane(numberOfTopics)
-	// _, err = c.ExtructPlane(numberOfTopics)
 	if err != nil {
 		return err
 	}
 
 	counter = len(plane)
 	bar := pb.StartNew(counter)
-	defer bar.Finish()
 
-	errCh := make(chan error)
+	// errCh := make(chan error)
 	topicCh := make(chan string, Treads)
 	newAssignCh := make(chan [][]int32, Treads)
 
-	log.Printf("Start time: %v", time.Now())
+	fmt.Printf("Start time: %v", time.Now())
 
 	wg.Add(Treads)
-	go func(topicCh chan string,
-		newAssignCh chan [][]int32,
-		errCh chan error,
-		plane map[string][][]int32,
-		counter *int,
-		wg *sync.WaitGroup,
-	) {
-		for k, v := range plane {
-			topicCh <- k
-			newAssignCh <- v
-		}
-
-		for {
-			if *counter < -1 {
-				break
-			}
-			fmt.Println("\rvait all gorutines", *counter)
-			time.Sleep(100 * time.Millisecond)
-			continue
-		}
-		wg.Wait()
-		log.Println("closing chanels")
-		close(topicCh)
-		close(newAssignCh)
-		close(errCh)
-	}(topicCh, newAssignCh, errCh, plane, &counter, &wg)
-
 	for i := 0; i < Treads; i++ {
-		go reassign(admin, topicCh, newAssignCh, errCh, &counter, &mu, bar, &wg)
+		go reassign(admin, topicCh, newAssignCh, bar, &wg)
 	}
+	for k, v := range plane {
+		topicCh <- k
+		newAssignCh <- v
+	}
+	// Closing channels, because read from closed channels is posible
+	close(topicCh)
+	close(newAssignCh)
 
-	for k := range errCh {
-		if k != nil {
-		}
-	}
-	// wg.Wait()
-	// log.Println("closing chanels")
-	// close(topicCh)
-	// close(newAssignCh)
-	// close(errCh)
-	log.Println(errors)
-	log.Printf("End time: %v", time.Now())
+	wg.Wait()
+	bar.Finish()
+	fmt.Println(errors)
+	fmt.Printf("End time: %v", time.Now())
 	return nil
 }
 
@@ -171,25 +141,15 @@ func reassign(
 	admin sarama.ClusterAdmin,
 	topic chan string,
 	newAssign chan [][]int32,
-	err chan error,
-	counter *int,
-	mu *sync.Mutex,
 	bar *pb.ProgressBar,
 	wg *sync.WaitGroup,
 ) {
-	for *counter > 0 {
-		er := admin.AlterPartitionReassignments(<-topic, <-newAssign)
+	for t := range topic {
+		err := admin.AlterPartitionReassignments(t, <-newAssign)
 		if err != nil {
-			err <- er
+			fmt.Println(err)
 		}
-		mu.Lock()
 		bar.Increment()
-		*counter--
-		mu.Unlock()
 	}
-	mu.Lock()
-	fmt.Println("Gorutine stoped")
-	*counter--
-	mu.Unlock()
 	wg.Done()
 }
