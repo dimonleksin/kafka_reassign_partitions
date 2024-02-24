@@ -43,14 +43,14 @@ func Reasign(settings pkg.Settings) {
 
 	fmt.Println()
 
+	fmt.Println("# # # # # # # Assign after rebalance # # # # # # #")
 	for i, v := range r.Brokers {
 		l = len(v.Topic)
 		numberOfTopics += l
 		fmt.Printf("After rebalance inside broker %d contains %d topics\n", i, l)
-		fmt.Printf("\tFor broker %d after rebalance number by leaders %d", i, v.Leaders)
-		fmt.Println()
+		fmt.Printf("\tFor broker %d after rebalance number by leaders %d\n\n", i, v.Leaders)
 	}
-
+	fmt.Println("# # # # # # # # # # # # # # # # # #  # # # # # # #")
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)
 	if err != nil {

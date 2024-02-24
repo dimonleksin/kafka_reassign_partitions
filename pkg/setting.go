@@ -139,7 +139,7 @@ func (s *Settings) parsingTopics(separator string) {
 }
 
 func (s Settings) verifyConf() error {
-	fmt.Printf("start verify configs. Bootstrap server %v", s.Brokers)
+	fmt.Printf("start verify configs. Bootstrap server %v\n", s.Brokers)
 	// fmt.Println(*s.ToS)
 	if !*s.H && !*s.Help {
 		if len(s.Brokers) > 0 {

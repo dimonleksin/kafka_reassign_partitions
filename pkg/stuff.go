@@ -154,6 +154,6 @@ func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
 	c.NumberOfBrokers = len(brokers) + 1
-	fmt.Printf("Number of brokers:  %d", c.NumberOfBrokers)
+	fmt.Printf("Number of brokers:  %d\n", c.NumberOfBrokers)
 	return nil
 }

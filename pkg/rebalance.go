@@ -20,7 +20,6 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 	}
 
 	if len(c.Brokers) == 0 {
-		fmt.Println(len(c.Brokers))
 		c.Brokers = make([]Topics, c.NumberOfBrokers)
 	}
 
@@ -57,10 +56,10 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 			}
 		}
 	}
+	fmt.Println("# # # # # # # # Current assign # # # # # # # #")
 	for i, v := range c.Brokers {
 		fmt.Printf("Before rebalance inside broker %d contains %d partitions\n", i, len(v.Topic))
-		fmt.Printf("\tFor broker %d before rebalance number by leaders %d\n", i, v.Leaders)
-		fmt.Println()
+		fmt.Printf("\tFor broker %d before rebalance number by leaders %d\n\n", i, v.Leaders)
 	}
 	return nil
 }
@@ -108,15 +107,15 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 	if err != nil {
 		return err
 	}
-
+	// runtime.GOMAXPROCS(4)
 	counter = len(plane)
 	bar := pb.StartNew(counter)
 
 	// errCh := make(chan error)
-	topicCh := make(chan string, Treads)
-	newAssignCh := make(chan [][]int32, Treads)
+	topicCh := make(chan string, Treads*2)
+	newAssignCh := make(chan [][]int32, Treads*2)
 
-	fmt.Printf("Start time: %v", time.Now())
+	fmt.Printf("Start time: %v\n", time.Now())
 
 	wg.Add(Treads)
 	for i := 0; i < Treads; i++ {

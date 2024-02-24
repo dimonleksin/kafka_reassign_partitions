@@ -41,8 +41,7 @@ func MoveTopic(settings pkg.Settings) (err error) {
 		l = len(v.Topic)
 		numberOfTopics += l
 		fmt.Printf("\nAfter rebalance inside broker %d contains %d topics\n", i, l)
-		fmt.Printf("\tFor broker %d after rebalance number by leaders %d", i, v.Leaders)
-		fmt.Println()
+		fmt.Printf("\tFor broker %d after rebalance number by leaders %d\n\n", i, v.Leaders)
 	}
 
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
