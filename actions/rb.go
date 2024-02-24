@@ -46,19 +46,19 @@ func Reasign(settings pkg.Settings) {
 	for i, v := range r.Brokers {
 		l = len(v.Topic)
 		numberOfTopics += l
-		log.Printf("After rebalance inside broker %d contains %d topics", i, l)
-		log.Printf("For broker %d after rebalance number by leaders %d", i, v.Leaders)
+		fmt.Printf("After rebalance inside broker %d contains %d topics\n", i, l)
+		fmt.Printf("\tFor broker %d after rebalance number by leaders %d", i, v.Leaders)
 		fmt.Println()
 	}
 
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)
 	if err != nil {
-		log.Fatal("Error read you responce")
+		log.Fatal("Error read you responce", err)
 	}
 
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics)
+		err = r.Rebalance(admin, numberOfTopics, *settings.Treads)
 		if err != nil {
 			log.Fatal(err)
 		}

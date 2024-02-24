@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -13,21 +12,6 @@ import (
 
 // NumberOfBrockers need equal to replication factor in u cluster
 const NumberOfBrockers int = 3
-
-type Settings struct {
-	BrokersS *string
-	Brokers  []string
-	Action   *string
-	User     *string
-	Passwd   *string
-	From     *int
-	ToS      *string
-	To       []int
-	H        *bool
-	Help     *bool
-	TopicS   *string
-	Topics   []string
-}
 
 func (s *Settings) GetSettings() error {
 	var (
@@ -90,7 +74,23 @@ func (s *Settings) GetSettings() error {
 		"--topic [string] for set TopicS name for move",
 	)
 
+	s.Treads = flag.Int(
+		"treads",
+		1,
+		"--treads: number of treads. Default true",
+	)
+
+	s.Version = flag.Bool(
+		"version",
+		false,
+		"--version fro print current version of krpg",
+	)
+
 	flag.Parse()
+
+	if *s.Version {
+		printVersion()
+	}
 
 	if !*s.H && !*s.Help {
 		if *s.Action == "move" {
@@ -139,8 +139,8 @@ func (s *Settings) parsingTopics(separator string) {
 }
 
 func (s Settings) verifyConf() error {
-	log.Printf("start verify configs. Bootstrap server %v", s.Brokers)
-	// log.Println(*s.ToS)
+	fmt.Printf("start verify configs. Bootstrap server %v", s.Brokers)
+	// fmt.Println(*s.ToS)
 	if !*s.H && !*s.Help {
 		if len(s.Brokers) > 0 {
 			for _, v := range s.Brokers {
@@ -172,6 +172,9 @@ func (s Settings) verifyConf() error {
 				return errors.New("username is not set. -h or --help for more details")
 			}
 		}
+		if *s.Treads < 1 {
+			return fmt.Errorf("number of treads invalid (%d<1) min number of treads: 1", *s.Treads)
+		}
 	}
 	return nil
 }
@@ -180,21 +183,15 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 
 	config := sarama.NewConfig()
 	if len(*s.User) != 0 {
-		config.Net.SASL = struct {
-			Enable                   bool
-			Mechanism                sarama.SASLMechanism
-			Version                  int16
-			Handshake                bool
-			AuthIdentity             string
-			User                     string
-			Password                 string
-			SCRAMAuthzID             string
-			SCRAMClientGeneratorFunc func() sarama.SCRAMClient
-			TokenProvider            sarama.AccessTokenProvider
-			GSSAPI                   sarama.GSSAPIConfig
-		}{Enable: true, Mechanism: sarama.SASLMechanism("SCRAM-SHA-256"), User: *s.User, Password: *s.Passwd}
+
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
+		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
+		config.Net.SASL.User = *s.User
+		config.Net.SASL.Password = *s.Passwd
+		config.Net.SASL.Enable = true
 	}
-	// config.Version = sarama.V2_8_0_0
+
+	config.Version = sarama.V3_6_0_0
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
 	if err != nil {
 		return nil, err

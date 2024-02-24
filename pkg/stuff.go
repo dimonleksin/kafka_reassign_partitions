@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"log"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -69,7 +69,7 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 	for i := 0; i < nob; i++ {
 		result.Brokers[i].Topic = make(map[int]string)
 	}
-
+	// not range, because neded received topic in ascending order or sorting not working
 	for i := 0; i < len(topics); i++ {
 		if counter == nob {
 			counter = 1
@@ -77,12 +77,13 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 		if to != nil {
 			counter = to[0]
 		}
-
 		// Getting role from topic: 1 - leader, 2 and other - replicas
 		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
 		if err != nil {
 			return result, err
 		}
+
+		// increment counter until broker with current replicas not fount for avoid dublications
 		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
 			// if --to not set, reasign for all brokers
 			if to == nil {
@@ -96,11 +97,9 @@ func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err er
 				counter = 1
 			}
 		}
-
 		if currentRole == 1 {
 			result.Brokers[counter].Leaders += 1
 		}
-
 		result.Brokers[counter].Topic[i] = topics[i]
 		if to == nil {
 			counter++
@@ -118,33 +117,18 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 		topic       string
 		partitionID int
 		positionID  int
-		l           int
-		// assigment   []int32
 	)
-	log.Println("Starting executing plane")
+	fmt.Println("Starting executing plane")
 	assigments := make(map[string][][]int32)
 
 	for i := 1; i < len(c.Brokers); i++ {
 		for _, t := range c.Brokers[i].Topic {
-			tmp := strings.Split(t, "-")
-			l = len(tmp)
-			// Geting topic name
-			topic = strings.Join(tmp[0:l-2], "-")
-			// Geting partition id
-			partitionID, err = strconv.Atoi(tmp[l-2])
-			// log.Println(topic, l, partitionID)
-			if err != nil {
-				return nil, err
-			}
-			// Geting position of reasign
-			positionID, err = strconv.Atoi(tmp[l-1])
-
+			topic, partitionID, positionID, err = parsTopicParams(t)
 			if err != nil {
 				return nil, err
 			}
 
 			if len(assigments[topic]) == 0 {
-				// log.Println("Make slices")
 				assigments[topic] = make([][]int32, numberOfTopics)
 			}
 			if len(assigments[topic][partitionID]) == 0 {
@@ -153,20 +137,23 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			assigments[topic][partitionID][positionID] = int32(i)
 		}
 	}
-	// Deleting zero value
-	plane = clearZeroValue(assigments)
+	plane, err = clearZeroValue(assigments)
+	if err != nil {
+		return nil, err
+	}
 	return plane, nil
 }
 
+// addded number of brokers from cluster to struct
 func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 	var (
 		brokers []*sarama.Broker
 	)
 	brokers, _, err = admin.DescribeCluster()
 	if err != nil {
-		return err
+		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
 	c.NumberOfBrokers = len(brokers) + 1
-	log.Printf("Number of brokers:  %d", c.NumberOfBrokers)
+	fmt.Printf("Number of brokers:  %d", c.NumberOfBrokers)
 	return nil
 }

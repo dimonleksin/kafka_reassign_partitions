@@ -12,8 +12,9 @@ func PrintHelp() {
 		"\tif set --user, u need set and --password\n\n" +
 		"--password [string] set password for connect to kafka\n" +
 		"\tif u set password without --user, this call panic\n\n" +
-		"--to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3" +
-		"--from [int] set source broker id" +
+		"--to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3\n\n" +
+		"--from [int] set source broker id\n\n" +
+		"--treads [int] seted number of treads for reassign\n\n" +
 		"-h or --help for print this help"
 	fmt.Println(textHelp)
 }
