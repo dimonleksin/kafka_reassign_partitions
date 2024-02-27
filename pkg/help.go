@@ -15,6 +15,8 @@ func PrintHelp() {
 		"--to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3\n\n" +
 		"--from [int] set source broker id\n\n" +
 		"--treads [int] seted number of treads for reassign\n\n" +
+		"--api-version set version of brokers in format 2.1.0 (default)\n\n" +
+		"--version print version from this build\n\n" +
 		"-h or --help for print this help"
 	fmt.Println(textHelp)
 }

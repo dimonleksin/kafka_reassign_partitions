@@ -79,6 +79,11 @@ func (s *Settings) GetSettings() error {
 		1,
 		"--treads: number of treads. Default true",
 	)
+	s.KafkaApiVersion = flag.String(
+		"api-version",
+		"2.7.0",
+		"--api-version seted version of brokers",
+	)
 
 	s.Version = flag.Bool(
 		"version",
@@ -102,6 +107,7 @@ func (s *Settings) GetSettings() error {
 		if len(*s.TopicS) > 0 {
 			s.parsingTopics(sep)
 		}
+		s.getKafkaVersion()
 		s.parsingBrokers(sep)
 		err = s.verifyConf()
 		if err != nil {
@@ -126,6 +132,18 @@ func (s *Settings) parsingTo(separator string) error {
 		return fmt.Errorf("flag --to want contains min %d, have %s. -h/--help for more information", NumberOfBrockers, *s.ToS)
 	}
 	return nil
+}
+
+func (s *Settings) getKafkaVersion() {
+	var (
+		err error
+	)
+	s.KafkaApiVersionFormated, err = sarama.ParseKafkaVersion(*s.KafkaApiVersion)
+	fmt.Println("kafka version: ", *s.KafkaApiVersion, s.KafkaApiVersionFormated)
+	if err != nil {
+		fmt.Printf("Error parsing broker api version: %v.\n\tSupported version: %v", err, sarama.SupportedVersions)
+		panic("")
+	}
 }
 
 func (s *Settings) parsingBrokers(separator string) {
@@ -191,7 +209,7 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 		config.Net.SASL.Enable = true
 	}
 
-	config.Version = sarama.V3_6_0_0
+	config.Version = s.KafkaApiVersionFormated
 	admin, err := sarama.NewClusterAdmin(s.Brokers, config)
 	if err != nil {
 		return nil, err

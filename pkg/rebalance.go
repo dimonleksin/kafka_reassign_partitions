@@ -107,7 +107,6 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 	if err != nil {
 		return err
 	}
-	// runtime.GOMAXPROCS(4)
 	counter = len(plane)
 	bar := pb.StartNew(counter)
 
