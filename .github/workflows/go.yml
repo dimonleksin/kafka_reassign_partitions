@@ -17,10 +17,11 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Build
-      run: GOOS=linux GOARCH=amd64 GOGCC=false go build -o krpg_0.1
+      run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o builds/krpg; \
+           GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o builds/krpg.exe
 
     - name: Upload Go results
       uses: actions/upload-artifact@v3
       with:
-        name: kurl_0.1
-        path: kurl_0.1
+        name: builds
+        path: builds
