@@ -139,7 +139,6 @@ func (s *Settings) getKafkaVersion() {
 		err error
 	)
 	s.KafkaApiVersionFormated, err = sarama.ParseKafkaVersion(*s.KafkaApiVersion)
-	fmt.Println("kafka version: ", *s.KafkaApiVersion, s.KafkaApiVersionFormated)
 	if err != nil {
 		fmt.Printf("Error parsing broker api version: %v.\n\tSupported version: %v", err, sarama.SupportedVersions)
 		panic("")
