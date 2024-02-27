@@ -14,19 +14,20 @@ type Topics struct {
 }
 
 type Settings struct {
-	BrokersS   *string
-	Brokers    []string
-	ApiVersion sarama.KafkaVersion
-	Action     *string
-	User       *string
-	Passwd     *string
-	From       *int
-	ToS        *string
-	To         []int
-	H          *bool
-	Help       *bool
-	TopicS     *string
-	Topics     []string
-	Treads     *int
-	Version    *bool
+	BrokersS                *string
+	Brokers                 []string
+	Action                  *string
+	User                    *string
+	Passwd                  *string
+	From                    *int
+	ToS                     *string
+	To                      []int
+	H                       *bool
+	Help                    *bool
+	TopicS                  *string
+	Topics                  []string
+	Treads                  *int
+	Version                 *bool
+	KafkaApiVersion         *string
+	KafkaApiVersionFormated sarama.KafkaVersion
 }
