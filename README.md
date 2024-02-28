@@ -29,6 +29,7 @@ Sometimes i'm needed remove one ore more nodes from cluster of kafka for work, u
 + --to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3
 + --from [int] set source broker id
 + --treads [int] seted number of treads for reassign
++ --api-version set version of brokers in format 2.1.0 (default)
 + --version prints the version of this
 + -h or --help for print this help
 
