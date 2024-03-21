@@ -47,11 +47,12 @@ func sortTopicMap(topics map[int]string) (sortedTopics map[int]string, err error
 }
 
 // Shufle current broker in broker list from --to for uniform reasign
-func shufleCounter(to []int) (newI []int) {
+func shufleCounter(to []int) []int {
 	tmp := to[0]
-	to[0] = to[1]
-	to[1] = to[2]
-	to[2] = tmp
+	for i := 0; i < len(to)-1; i++ {
+		to[i] = to[i+1]
+	}
+	to[len(to)-1] = tmp
 	return to
 }
 

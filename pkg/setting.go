@@ -71,13 +71,13 @@ func (s *Settings) GetSettings() error {
 	s.TopicS = flag.String(
 		"topic",
 		"",
-		"--topic [string] for set TopicS name for move",
+		"--topic [string] for set topic name for move",
 	)
 
 	s.Treads = flag.Int(
 		"treads",
 		1,
-		"--treads: number of treads. Default true",
+		"--treads: number of treads. Default: 1",
 	)
 	s.KafkaApiVersion = flag.String(
 		"api-version",
@@ -88,7 +88,7 @@ func (s *Settings) GetSettings() error {
 	s.Version = flag.Bool(
 		"version",
 		false,
-		"--version fro print current version of krpg",
+		"--version for print current version of krpg",
 	)
 
 	flag.Parse()
@@ -165,13 +165,13 @@ func (s Settings) verifyConf() error {
 					return fmt.Errorf("bootstrap servers not find or incorrect. \n\tCurrent value of bootstrap-server %v", s.Brokers)
 				}
 				if !strings.Contains(v, ":") {
-					return fmt.Errorf("u \"--bootstrap-server\" not contains port: %s. -h or --help for print small man", v)
+					return fmt.Errorf("you \"--bootstrap-server\" not contains port: %s. -h or --help for print small man", v)
 				}
 			}
 		}
 		if len(*s.TopicS) > 0 {
 			if *s.From != -1 || *s.Action != "move" {
-				return fmt.Errorf("if u set key --TopicS, u can't set key --from or set key --action not aqual 'nove'")
+				return fmt.Errorf("if you set key --TopicS, u can't set key --from or set key --action not aqual 'nove'")
 			}
 		}
 		if *s.From != -1 || len(*s.TopicS) > 0 {
