@@ -47,11 +47,12 @@ func sortTopicMap(topics map[int]string) (sortedTopics map[int]string, err error
 }
 
 // Shufle current broker in broker list from --to for uniform reasign
-func shufleCounter(to []int) (newI []int) {
+func shufleCounter(to []int) []int {
 	tmp := to[0]
-	to[0] = to[1]
-	to[1] = to[2]
-	to[2] = tmp
+	for i := 0; i < len(to)-1; i++ {
+		to[i] = to[i+1]
+	}
+	to[len(to)-1] = tmp
 	return to
 }
 
@@ -147,13 +148,20 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 // addded number of brokers from cluster to struct
 func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 	var (
-		brokers []*sarama.Broker
+		brokers   []*sarama.Broker
+		maxBroker int
 	)
 	brokers, _, err = admin.DescribeCluster()
 	if err != nil {
 		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
-	c.NumberOfBrokers = len(brokers) + 1
+	// search max broker id, because brokers not need
+	for _, broker := range brokers {
+		if broker.ID() > int32(maxBroker) {
+			maxBroker = int(broker.ID())
+		}
+	}
+	c.NumberOfBrokers = maxBroker + 1
 	fmt.Printf("Number of brokers:  %d\n", c.NumberOfBrokers)
 	return nil
 }
