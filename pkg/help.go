@@ -3,7 +3,7 @@ package pkg
 import "fmt"
 
 func PrintHelp() {
-	textHelp := "--bootstrap_server [string] for set addres of brokers\n" +
+	textHelp := "--bootstrap-server [string] for set addres of brokers\n" +
 		"\t format: host:port, like 127.0.0.1:9092\n\n" +
 		"--topic [string/[]string] for set topics name for move\n" +
 		"\tif u send some topics - separator ','\n\n" +

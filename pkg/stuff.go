@@ -148,13 +148,20 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 // addded number of brokers from cluster to struct
 func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 	var (
-		brokers []*sarama.Broker
+		brokers   []*sarama.Broker
+		maxBroker int
 	)
 	brokers, _, err = admin.DescribeCluster()
 	if err != nil {
 		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
-	c.NumberOfBrokers = len(brokers) + 1
+	// search max broker id, because brokers not need
+	for _, broker := range brokers {
+		if broker.ID() > int32(maxBroker) {
+			maxBroker = int(broker.ID())
+		}
+	}
+	c.NumberOfBrokers = maxBroker + 1
 	fmt.Printf("Number of brokers:  %d\n", c.NumberOfBrokers)
 	return nil
 }

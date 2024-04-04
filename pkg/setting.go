@@ -39,7 +39,7 @@ func (s *Settings) GetSettings() error {
 	)
 
 	s.Passwd = flag.String(
-		"passwd",
+		"password",
 		"",
 		"--password need contains u password for acces to cluster",
 	)
