@@ -27,14 +27,14 @@ func Reasign(settings pkg.Settings) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = r.GetCurrentBalance(admin, *settings.From)
+	err = r.GetCurrentBalance(admin, *settings.MoveSetting.From)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(settings.To) == 0 {
+	if len(settings.MoveSetting.To) == 0 {
 		RebalancePlane, err = r.CreateRebalancePlane(nil)
 	} else {
-		RebalancePlane, err = r.CreateRebalancePlane(settings.To)
+		RebalancePlane, err = r.CreateRebalancePlane(settings.MoveSetting.To)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -58,7 +58,7 @@ func Reasign(settings pkg.Settings) {
 	}
 
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics, *settings.Treads)
+		err = r.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads)
 		if err != nil {
 			log.Fatal(err)
 		}
