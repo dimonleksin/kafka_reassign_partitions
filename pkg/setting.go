@@ -274,10 +274,12 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 		config.Net.TLS.Config = &tls.Config{
 			InsecureSkipVerify: false,
 		}
+		config.Net.TLS.Config.RootCAs = x509.NewCertPool()
 		if len(*certs.CAPath) != 0 {
-			config.Net.TLS.Config.RootCAs = x509.NewCertPool()
 			cert, _ := os.ReadFile(*certs.CAPath)
 			config.Net.TLS.Config.RootCAs.AppendCertsFromPEM(cert)
+		} else {
+			config.Net.TLS.Config.RootCAs = nil
 		}
 
 		if len(*certs.CertPath) != 0 {
