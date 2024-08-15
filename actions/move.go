@@ -25,14 +25,14 @@ func MoveTopic(settings pkg.Settings) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if r.NumberOfBrokers < len(settings.To) {
-		return fmt.Errorf("current number of brokers(%d) > value of --to (%d)", r.NumberOfBrokers, len(settings.To))
+	if r.NumberOfBrokers < len(settings.MoveSetting.To) {
+		return fmt.Errorf("current number of brokers(%d) > value of --to (%d)", r.NumberOfBrokers, len(settings.MoveSetting.To))
 	}
-	err = r.DescribeTopic(admin, settings.Topics)
+	err = r.DescribeTopic(admin, settings.MoveSetting.Topics)
 	if err != nil {
 		log.Fatal(err)
 	}
-	plane, err := r.CreateRebalancePlane(settings.To)
+	plane, err := r.CreateRebalancePlane(settings.MoveSetting.To)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func MoveTopic(settings pkg.Settings) (err error) {
 	}
 
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics, *settings.Treads)
+		err = r.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads)
 		if err != nil {
 			log.Fatal(err)
 		}

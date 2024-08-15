@@ -2,7 +2,10 @@ package pkg
 
 import "github.com/IBM/sarama"
 
-// string of topics contains: topics.name-partition-replicas(brokerId)
+/*
+/* string of topics contains: topics.name-partition-replicas
+/* where replicas is a broker Id
+*/
 
 type Cluster struct {
 	Brokers         []Topics
@@ -14,20 +17,42 @@ type Topics struct {
 }
 
 type Settings struct {
-	BrokersS                *string
-	Brokers                 []string
-	Action                  *string
-	User                    *string
-	Passwd                  *string
-	From                    *int
-	ToS                     *string
-	To                      []int
+	MoveSetting             MoveSettings   `yaml:"move-params"`
+	BootstrapSettings       BrokerSettings `yaml:"kafka"`
+	KafkaApiVersionFormated sarama.KafkaVersion
 	H                       *bool
 	Help                    *bool
-	TopicS                  *string
-	Topics                  []string
-	Treads                  *int
 	Version                 *bool
-	KafkaApiVersion         *string
-	KafkaApiVersionFormated sarama.KafkaVersion
+}
+
+type BrokerSettings struct {
+	BrokersS        *string
+	KafkaApiVersion *string          `yaml:"api-version"`
+	Security        SecuritySettings `yaml:"security"`
+	Brokers         []string         `yaml:"bootstrap-server"`
+}
+
+type SecuritySettings struct {
+	User      *string `yaml:"user"`
+	Passwd    *string `yaml:"password"`
+	Mechanism *string `yaml:"mechanism"`
+	Protocol  *string `yaml:"protocol"`
+	Tls       TLS     `yaml:"tls"`
+}
+
+type TLS struct {
+	UseTLS   *bool   `yaml:"enable"`
+	CAPath   *string `yaml:"ca"`
+	CertPath *string `yaml:"cert"`
+	KeyPath  *string `yaml:"key"`
+}
+
+type MoveSettings struct {
+	From   *int  `yaml:"from"`
+	To     []int `yaml:"to"`
+	ToS    *string
+	TopicS *string
+	Treads *int
+	Action *string  `yaml:"action"`
+	Topics []string `yaml:"topics"`
 }

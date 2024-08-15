@@ -26,6 +26,13 @@ Sometimes i'm needed remove one ore more nodes from cluster of kafka for work, u
 	- if set --user, u need set and --password
 + --password [string] set password for connect to kafka
 	- if u set password without --user, this call panic
++ --mechanism [string] scram-sha-256 or scram-sha-512
+	- defining only if you use auth with loggin and password
++ --tls define if need uth TLS
++ --ca [string] path to CA file
++ --cert [string] path to cert file
+    - if you define --cert, dont forget defined --key
++ --key [string] path to key file
 + --to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3
 + --from [int] set source broker id
 + --treads [int] seted number of treads for reassign

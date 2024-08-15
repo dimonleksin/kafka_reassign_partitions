@@ -19,10 +19,10 @@ func main() {
 		pkg.PrintHelp()
 		os.Exit(0)
 	}
-	if *settings.Action == "rebalance" || *settings.Action == "move" && *settings.From != -1 {
+	if *settings.MoveSetting.Action == "rebalance" || *settings.MoveSetting.Action == "move" && *settings.MoveSetting.From != -1 {
 		actions.Reasign(settings)
-	} else if *settings.Action == "move" && *settings.From == -1 {
-		if len(settings.Topics) != 0 {
+	} else if *settings.MoveSetting.Action == "move" && *settings.MoveSetting.From == -1 {
+		if len(settings.MoveSetting.Topics) != 0 {
 			err := actions.MoveTopic(settings)
 			if err != nil {
 				log.Fatal(err)
