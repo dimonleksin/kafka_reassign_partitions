@@ -69,7 +69,7 @@ func (s *Settings) GetSettings() error {
 	s.BootstrapSettings.Security.Tls.UseTLS = flag.Bool(
 		"tls",
 		false,
-		"--tls enebling tls protocol",
+		"--tls enebling tls",
 	)
 	s.MoveSetting.From = flag.Int(
 		"from",
@@ -105,6 +105,11 @@ func (s *Settings) GetSettings() error {
 		"treads",
 		1,
 		"--treads: number of treads. Default: 1",
+	)
+	s.MoveSetting.Sync = *flag.Bool(
+		"sync",
+		true,
+		"sync/async work with topic. If true - krpg wait when all replicas for partition moved in desired state",
 	)
 	s.BootstrapSettings.KafkaApiVersion = flag.String(
 		"api-version",

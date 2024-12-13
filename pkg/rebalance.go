@@ -118,7 +118,7 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 
 	wg.Add(Treads)
 	for i := 0; i < Treads; i++ {
-		go reassign(admin, topicCh, newAssignCh, bar, &wg)
+		go reassign(admin, topicCh, newAssignCh, true, bar, &wg)
 	}
 	for k, v := range plane {
 		topicCh <- k
@@ -139,13 +139,44 @@ func reassign(
 	admin sarama.ClusterAdmin,
 	topic chan string,
 	newAssign chan [][]int32,
+	syncWork bool,
 	bar *pb.ProgressBar,
 	wg *sync.WaitGroup,
 ) {
 	for t := range topic {
-		err := admin.AlterPartitionReassignments(t, <-newAssign)
+		partitionsWithAssign := <-newAssign
+		listOfPartitions := make([]int32, len(partitionsWithAssign))
+		for k, _ := range partitionsWithAssign {
+			listOfPartitions = append(listOfPartitions, int32(k))
+		}
+		err := admin.AlterPartitionReassignments(t, partitionsWithAssign)
 		if err != nil {
 			fmt.Println(err)
+		}
+		if syncWork {
+			for {
+				status, err := admin.ListPartitionReassignments(t, listOfPartitions)
+				if err != nil {
+					fmt.Println(err)
+				}
+				statusOfTopic := status[t]
+				for partitions, partitionStatus := range statusOfTopic {
+					/*
+						/* if in AddingReplicas and RemovingReplicas here are none left elements
+						/* then all replicas for this partition moved
+					*/
+					if len(partitionStatus.AddingReplicas) == 0 && len(partitionStatus.RemovingReplicas) == 0 {
+						delete(statusOfTopic, partitions)
+					}
+				}
+				/*
+					/* if in statusOfTopic there are none left elements
+					/* then all partitions inbalanced
+				*/
+				if len(statusOfTopic) == 0 {
+					break
+				}
+			}
 		}
 		bar.Increment()
 	}

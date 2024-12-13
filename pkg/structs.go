@@ -55,4 +55,5 @@ type MoveSettings struct {
 	Treads *int
 	Action *string  `yaml:"action"`
 	Topics []string `yaml:"topics"`
+	Sync   bool     `yaml:"sync"` // if true - await finaly rebalase before work with next topic
 }
