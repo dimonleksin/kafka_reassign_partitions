@@ -131,7 +131,7 @@ func (s *Settings) GetSettings() error {
 		"-v for verbose output",
 	)
 
-	path_to_cfg = *flag.String("file", "./krpg.yaml", "")
+	path_to_cfg = *flag.String("file", "./krpg.yaml", "--file for set path to settings file. Default - ./krpg.yaml")
 
 	flag.Parse()
 

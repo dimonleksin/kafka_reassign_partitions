@@ -27,6 +27,7 @@ func PrintHelp() {
 		"--api-version set version of brokers in format 2.1.0 (default)\n\n" +
 		"--version print version from this build\n\n" +
 		"-v verbose(more output) without progress bar\n\n" +
+		"--file for set path to settings file. Default - ./krpg.yaml\n\n" +
 		"-h or --help for print this help"
 	fmt.Println(textHelp)
 	printVersion()
