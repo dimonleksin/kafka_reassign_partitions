@@ -20,16 +20,17 @@ type Settings struct {
 	MoveSetting             MoveSettings   `yaml:"move-params"`
 	BootstrapSettings       BrokerSettings `yaml:"kafka"`
 	KafkaApiVersionFormated sarama.KafkaVersion
-	H                       *bool
+	H                       *bool // equal help
 	Help                    *bool
 	Version                 *bool
+	Verbose                 bool // verbose output
 }
 
 type BrokerSettings struct {
-	BrokersS        *string
+	BrokersS        *string          `yaml:"bootstrap-server"`
 	KafkaApiVersion *string          `yaml:"api-version"`
 	Security        SecuritySettings `yaml:"security"`
-	Brokers         []string         `yaml:"bootstrap-server"`
+	Brokers         []string         `yaml:"-"`
 }
 
 type SecuritySettings struct {
@@ -48,10 +49,10 @@ type TLS struct {
 }
 
 type MoveSettings struct {
-	From   *int  `yaml:"from"`
-	To     []int `yaml:"to"`
-	ToS    *string
-	TopicS *string
+	From   *int    `yaml:"from"`
+	To     []int   `yaml:"-"`
+	ToS    *string `yaml:"to"`
+	TopicS *string `yaml:"-"`
 	Treads *int
 	Action *string  `yaml:"action"`
 	Topics []string `yaml:"topics"`

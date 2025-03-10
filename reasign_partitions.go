@@ -28,5 +28,7 @@ func main() {
 				log.Fatal(err)
 			}
 		}
+	} else if *settings.MoveSetting.Action == "restore" {
+		actions.Restore(settings)
 	}
 }

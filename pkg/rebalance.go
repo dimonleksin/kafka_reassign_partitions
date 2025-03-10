@@ -57,14 +57,12 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 		}
 	}
 	fmt.Println("# # # # # # # # Current assign # # # # # # # #")
-	for i, v := range c.Brokers {
-		fmt.Printf("Before rebalance inside broker %d contains %d partitions\n", i, len(v.Topic))
-		fmt.Printf("\tFor broker %d before rebalance number by leaders %d\n\n", i, v.Leaders)
-	}
+	fmt.Println(MakeTable(c.Brokers))
+
 	return nil
 }
 
-func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
+func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics int, err error) {
 	var (
 		allTopics     map[int]string
 		allTopicsSort map[int]string
@@ -84,22 +82,23 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, err error) {
 
 	allTopicsSort, err = sortTopicMap(allTopics)
 	if err != nil {
-		return result, err
+		return result, 0, err
 	}
-
+	numberOfTopics = len(allTopics)
 	result, err = makePlane(allTopicsSort, c.NumberOfBrokers, to)
 
 	if err != nil {
-		return result, nil
+		return result, numberOfTopics, nil
 	}
-	return result, nil
+	return result, numberOfTopics, nil
 }
 
-func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int) (err error) {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int, settings Settings) (err error) {
 	var (
 		counter int
 		wg      sync.WaitGroup
 		errors  []error
+		bar     *pb.ProgressBar
 	)
 	fmt.Println()
 	fmt.Println("Starting rebalance...")
@@ -108,7 +107,11 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 		return err
 	}
 	counter = len(plane)
-	bar := pb.StartNew(counter)
+	if settings.Verbose {
+		bar = nil
+	} else {
+		bar = pb.StartNew(counter)
+	}
 
 	// errCh := make(chan error)
 	topicCh := make(chan string, Treads*2)
@@ -118,7 +121,7 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 
 	wg.Add(Treads)
 	for i := 0; i < Treads; i++ {
-		go reassign(admin, topicCh, newAssignCh, true, bar, &wg)
+		go reassign(admin, topicCh, newAssignCh, settings, bar, &wg)
 	}
 	for k, v := range plane {
 		topicCh <- k
@@ -135,11 +138,15 @@ func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads
 	return nil
 }
 
+/*
+generate request for reassign topic,
+and if --sync then wait result
+*/
 func reassign(
 	admin sarama.ClusterAdmin,
 	topic chan string,
 	newAssign chan [][]int32,
-	syncWork bool,
+	settings Settings,
 	bar *pb.ProgressBar,
 	wg *sync.WaitGroup,
 ) {
@@ -150,10 +157,16 @@ func reassign(
 			listOfPartitions = append(listOfPartitions, int32(k))
 		}
 		err := admin.AlterPartitionReassignments(t, partitionsWithAssign)
+		if settings.Verbose {
+			fmt.Printf("reassign topic %s\n", t)
+		}
 		if err != nil {
 			fmt.Println(err)
 		}
-		if syncWork {
+		if !settings.MoveSetting.Sync {
+			if settings.Verbose {
+				fmt.Printf("wait for topic %s\n", t)
+			}
 			for {
 				status, err := admin.ListPartitionReassignments(t, listOfPartitions)
 				if err != nil {
@@ -162,23 +175,29 @@ func reassign(
 				statusOfTopic := status[t]
 				for partitions, partitionStatus := range statusOfTopic {
 					/*
-						/* if in AddingReplicas and RemovingReplicas here are none left elements
-						/* then all replicas for this partition moved
+						if in AddingReplicas and RemovingReplicas here are none left elements
+						then all replicas for this partition moved
 					*/
 					if len(partitionStatus.AddingReplicas) == 0 && len(partitionStatus.RemovingReplicas) == 0 {
 						delete(statusOfTopic, partitions)
 					}
 				}
 				/*
-					/* if in statusOfTopic there are none left elements
-					/* then all partitions inbalanced
+					if in statusOfTopic there are none left elements
+					then all partitions inbalanced
 				*/
 				if len(statusOfTopic) == 0 {
 					break
 				}
+				time.Sleep(500 * time.Millisecond)
+			}
+			if settings.Verbose {
+				fmt.Printf("all partitions for topic %s succesfule reassigned\n", t)
 			}
 		}
-		bar.Increment()
+		if !settings.Verbose {
+			bar.Increment()
+		}
 	}
 	wg.Done()
 }
