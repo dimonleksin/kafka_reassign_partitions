@@ -12,7 +12,6 @@ func Reasign(settings pkg.Settings) {
 		err            error
 		RebalancePlane pkg.Cluster
 		numberOfTopics int
-		l              int
 		responce       string
 	)
 
@@ -31,10 +30,11 @@ func Reasign(settings pkg.Settings) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	r.CreateBackup()
 	if len(settings.MoveSetting.To) == 0 {
-		RebalancePlane, err = r.CreateRebalancePlane(nil)
+		RebalancePlane, numberOfTopics, err = r.CreateRebalancePlane(nil)
 	} else {
-		RebalancePlane, err = r.CreateRebalancePlane(settings.MoveSetting.To)
+		RebalancePlane, numberOfTopics, err = r.CreateRebalancePlane(settings.MoveSetting.To)
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -44,21 +44,15 @@ func Reasign(settings pkg.Settings) {
 	fmt.Println()
 
 	fmt.Println("# # # # # # # Assign after rebalance # # # # # # #")
-	for i, v := range r.Brokers {
-		l = len(v.Topic)
-		numberOfTopics += l
-		fmt.Printf("After rebalance inside broker %d contains %d topics\n", i, l)
-		fmt.Printf("\tFor broker %d after rebalance number by leaders %d\n\n", i, v.Leaders)
-	}
+	fmt.Println(pkg.MakeTable(r.Brokers))
 	fmt.Println("# # # # # # # # # # # # # # # # # #  # # # # # # #")
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)
 	if err != nil {
 		log.Fatal("Error read you responce", err)
 	}
-
 	if responce == "y" {
-		err = r.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads)
+		err = r.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads, settings)
 		if err != nil {
 			log.Fatal(err)
 		}

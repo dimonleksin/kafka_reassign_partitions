@@ -125,6 +125,7 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 	for i := 1; i < len(c.Brokers); i++ {
 		for _, t := range c.Brokers[i].Topic {
 			topic, partitionID, positionID, err = parsTopicParams(t)
+
 			if err != nil {
 				return nil, err
 			}

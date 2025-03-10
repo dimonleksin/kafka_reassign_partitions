@@ -1,0 +1,7 @@
+kafka:
+  api-version: "2.7.0"
+  bootstrap-server: "192.168.0.153:9092"
+move-params:
+  action: "restore"
+  # from: 4
+  # to: "1,2,3"

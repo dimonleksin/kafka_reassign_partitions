@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
+	"gopkg.in/yaml.v3"
 )
 
 // NumberOfBrockers need equal to replication factor in u cluster
@@ -18,7 +19,8 @@ const NumberOfBrockers int = 3
 
 func (s *Settings) GetSettings() error {
 	var (
-		err error
+		err         error
+		path_to_cfg string
 	)
 
 	const sep string = ","
@@ -107,9 +109,9 @@ func (s *Settings) GetSettings() error {
 		"--treads: number of treads. Default: 1",
 	)
 	s.MoveSetting.Sync = *flag.Bool(
-		"sync",
-		true,
-		"sync/async work with topic. If true - krpg wait when all replicas for partition moved in desired state",
+		"async",
+		false,
+		"sync/async work with topic. If true - krpg not wait when all replicas for partition moved in desired state",
 	)
 	s.BootstrapSettings.KafkaApiVersion = flag.String(
 		"api-version",
@@ -123,6 +125,14 @@ func (s *Settings) GetSettings() error {
 		"--version for print current version of krpg",
 	)
 
+	s.Verbose = *flag.Bool(
+		"v",
+		false,
+		"-v for verbose output",
+	)
+
+	path_to_cfg = *flag.String("file", "./krpg.yaml", "")
+
 	flag.Parse()
 
 	if *s.Version {
@@ -130,6 +140,7 @@ func (s *Settings) GetSettings() error {
 	}
 
 	if !*s.H && !*s.Help {
+		s.readYamlSettings(path_to_cfg)
 		if *s.MoveSetting.Action == "move" {
 			err = s.parsingTo(sep)
 			if err != nil {
@@ -302,4 +313,16 @@ func (s Settings) Conf() (sarama.ClusterAdmin, error) {
 		return nil, err
 	}
 	return admin, nil
+}
+
+func (s *Settings) readYamlSettings(path string) {
+	settings_file, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("settings file not exist")
+		return
+	}
+	err = yaml.Unmarshal(settings_file, s)
+	if err != nil {
+		panic(fmt.Sprintf("cannot read settings yaml. Err: %v", err))
+	}
 }
