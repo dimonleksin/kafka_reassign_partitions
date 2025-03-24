@@ -1,4 +1,4 @@
-package pkg
+package cmd
 
 import (
 	"github.com/dimonleksin/kafka_reasign_partition/internal/backup"
@@ -12,9 +12,9 @@ func (c Cluster) CreateBackup() {
 	b.CreateBackup(c)
 }
 
-func (c *Cluster) Restore() {
+func (c *Cluster) Restore(version int) {
 	b := backup.Backup{}
-	b.GetBackup()
+	b.GetBackup(version)
 	c.CopyBackupToCluster(b)
 }
 

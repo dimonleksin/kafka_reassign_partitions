@@ -16,6 +16,13 @@ Sometimes i'm needed remove one ore more nodes from cluster of kafka for work, u
     - if for some reason you moved topics and you cluster in disbalance, you can fix it with --rebalance
     krpg will avally moved all topics in all brokers from you cluster
 
++ Restore state before changes
+
+## Backups
+Backup files stored in ~/.krpg_backup.v.[1-10].
+Backup files rotate autamated, without settings.
+Max numbaer of backups - 10.
+
 ## How to use this
 + --bootstrap_server [string] for set addres of brokers
     - format: host:port, like 127.0.0.1:9092
@@ -36,7 +43,9 @@ Sometimes i'm needed remove one ore more nodes from cluster of kafka for work, u
 + --to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3
 + --from [int] set source broker id
 + --treads [int] seted number of treads for reassign
++ --async sync/async work with topics. If you define this key - krpg not wait when all replicas for partition moved in desired state
 + --api-version set version of brokers in format 2.1.0 (default)
++ --file for set path to settings file. Default - ./krpg.yaml
 + --version prints the version of this
 + -h or --help for print this help
 

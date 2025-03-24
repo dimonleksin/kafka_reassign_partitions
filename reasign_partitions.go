@@ -5,18 +5,18 @@ import (
 	"os"
 
 	"github.com/dimonleksin/kafka_reasign_partition/actions"
-	"github.com/dimonleksin/kafka_reasign_partition/pkg"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff"
 )
 
 func main() {
-	settings := pkg.Settings{}
+	settings := settings.Settings{}
 	err := settings.GetSettings()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// log.Println(*settings.H, *settings.Help)
 	if *settings.H || *settings.Help {
-		pkg.PrintHelp()
+		stuff.PrintHelp()
 		os.Exit(0)
 	}
 	if *settings.MoveSetting.Action == "rebalance" || *settings.MoveSetting.Action == "move" && *settings.MoveSetting.From != -1 {
