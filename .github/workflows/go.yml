@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build
+    - name: Build App
       run: |
         GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o builds/krpg &&  \
         GOOS=windows GOARCH=amd64 go build -o builds/krpg.exe
