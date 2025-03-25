@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/dimonleksin/kafka_reasign_partition/pkg"
+	"github.com/dimonleksin/kafka_reasign_partition/cmd"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
 )
 
-func Restore(settings pkg.Settings) {
+func Restore(settings settings.Settings) {
 	var (
 		err            error
 		numberOfTopics int
@@ -21,12 +22,12 @@ func Restore(settings pkg.Settings) {
 	}
 	defer admin.Close()
 
-	c := pkg.Cluster{}
+	c := cmd.Cluster{}
 	err = c.GetNumberOfBrokers(admin)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Restore()
+	c.Restore(settings.MoveSetting.BackupVersion)
 	RebalancePlane, numberOfTopics, err := c.CreateRebalancePlane(nil)
 	if err != nil {
 		fmt.Printf("Error create assign plane. %v", err)
@@ -35,9 +36,7 @@ func Restore(settings pkg.Settings) {
 	fmt.Println()
 	c = RebalancePlane
 
-	fmt.Println("# # # # # # # Assign after restore # # # # # # #")
-	fmt.Println(pkg.MakeTable(c.Brokers))
-	fmt.Println("# # # # # # # # # # # #  # # # # # # # # # # # #")
+	fmt.Println(cmd.MakeTable(c.Brokers, "Assign after restore"))
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)
 	if err != nil {

@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dimonleksin/kafka_reasign_partition/pkg"
+	"github.com/dimonleksin/kafka_reasign_partition/cmd"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
 )
 
-func MoveTopic(settings pkg.Settings) (err error) {
+func MoveTopic(settings settings.Settings) (err error) {
 	var (
 		responce       string
 		numberOfTopics int
-		plane          pkg.Cluster
+		plane          cmd.Cluster
 	)
 	admin, err := settings.Conf()
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer admin.Close()
-	r := pkg.Cluster{}
+	r := cmd.Cluster{}
 	err = r.GetNumberOfBrokers(admin)
 
 	if err != nil {
@@ -37,11 +37,8 @@ func MoveTopic(settings pkg.Settings) (err error) {
 		log.Fatal(err)
 	}
 	r = plane
-	fmt.Println()
-	fmt.Println("# # # # # # # # # Assign after move # # # # # # # # #")
-	fmt.Println(pkg.MakeTable(r.Brokers))
-	fmt.Println()
-	fmt.Println("# # # # # # # # # # # # # # # # # # # # # # # # # # #")
+
+	fmt.Println(cmd.MakeTable(r.Brokers, "Assign after move"))
 
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
 	_, err = fmt.Scan(&responce)

@@ -1,4 +1,4 @@
-package pkg
+package settings
 
 import (
 	"crypto/sha256"

@@ -1,4 +1,4 @@
-package pkg
+package settings
 
 import (
 	"crypto/tls"
@@ -11,11 +11,53 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff"
 	"gopkg.in/yaml.v3"
 )
 
-// NumberOfBrockers need equal to replication factor in u cluster
-const NumberOfBrockers int = 3
+type Settings struct {
+	MoveSetting             MoveSettings   `yaml:"move-params"`
+	BootstrapSettings       BrokerSettings `yaml:"kafka"`
+	KafkaApiVersionFormated sarama.KafkaVersion
+	H                       *bool // equal help
+	Help                    *bool
+	Version                 *bool
+	Verbose                 bool // verbose output
+}
+
+type BrokerSettings struct {
+	BrokersS        *string          `yaml:"bootstrap-server"`
+	KafkaApiVersion *string          `yaml:"api-version"`
+	Security        SecuritySettings `yaml:"security"`
+	Brokers         []string         `yaml:"-"`
+}
+
+type SecuritySettings struct {
+	User      *string `yaml:"user"`
+	Passwd    *string `yaml:"password"`
+	Mechanism *string `yaml:"mechanism"`
+	Protocol  *string `yaml:"protocol"`
+	Tls       TLS     `yaml:"tls"`
+}
+
+type TLS struct {
+	UseTLS   *bool   `yaml:"enable"`
+	CAPath   *string `yaml:"ca"`
+	CertPath *string `yaml:"cert"`
+	KeyPath  *string `yaml:"key"`
+}
+
+type MoveSettings struct {
+	From          *int    `yaml:"from"`
+	To            []int   `yaml:"-"`
+	ToS           *string `yaml:"to"`
+	TopicS        *string `yaml:"-"`
+	Treads        *int
+	Action        *string  `yaml:"action"`
+	Topics        []string `yaml:"topics"`
+	Sync          bool     `yaml:"sync"`           // if true - await finaly rebalase before work with next topic
+	BackupVersion int      `yaml:"backup-version"` // version of backup for restore
+}
 
 func (s *Settings) GetSettings() error {
 	var (
@@ -24,6 +66,12 @@ func (s *Settings) GetSettings() error {
 	)
 
 	const sep string = ","
+
+	s.MoveSetting.BackupVersion = *flag.Int(
+		"backup-version",
+		0,
+		"--backup-version [int] unnaccessary version of backup for restore (use if --action restore)",
+	)
 
 	s.BootstrapSettings.BrokersS = flag.String(
 		"bootstrap-server",
@@ -136,11 +184,13 @@ func (s *Settings) GetSettings() error {
 	flag.Parse()
 
 	if *s.Version {
-		printVersion()
+		stuff.PrintVersion()
 	}
 
 	if !*s.H && !*s.Help {
-		s.readYamlSettings(path_to_cfg)
+		if canReadCert(path_to_cfg) {
+			s.readYamlSettings(path_to_cfg)
+		}
 		if *s.MoveSetting.Action == "move" {
 			err = s.parsingTo(sep)
 			if err != nil {
@@ -166,17 +216,18 @@ func (s *Settings) parsingTo(separator string) error {
 		for _, v := range strings.Split(*s.MoveSetting.ToS, separator) {
 			v_int, err := strconv.Atoi(v)
 			if err != nil {
-				return err
+				return fmt.Errorf("error convert string with value from --to key to int, err: %v", err)
 			}
 			s.MoveSetting.To = append(s.MoveSetting.To, v_int)
 		}
 
 	} else {
-		return fmt.Errorf(
-			"flag --to want contains min %d, have %s. -h/--help for more information",
-			NumberOfBrockers,
-			*s.MoveSetting.ToS,
-		)
+		v_int, err := strconv.Atoi(*s.MoveSetting.ToS)
+		if err != nil {
+			return fmt.Errorf("error convert string with value from --to key to int, err: %v", err)
+		}
+		s.MoveSetting.To = append(s.MoveSetting.To, v_int)
+
 	}
 	return nil
 }
@@ -220,8 +271,8 @@ func (s Settings) verifyConf() error {
 			}
 		}
 		if *s.MoveSetting.From != -1 || len(*s.MoveSetting.TopicS) > 0 {
-			if len(s.MoveSetting.To) < NumberOfBrockers {
-				return fmt.Errorf("flag --to want contains min %d, have %d", NumberOfBrockers, len(s.MoveSetting.To))
+			if len(s.MoveSetting.To) == 0 {
+				return fmt.Errorf("flag --to want contains min 1 broker, have %d", len(s.MoveSetting.To))
 			}
 		}
 		if len(*s.BootstrapSettings.Security.User) > 0 {
@@ -257,10 +308,7 @@ func (s Settings) verifyConf() error {
 func canReadCert(path string) bool {
 	if len(path) > 0 {
 		_, err := os.ReadFile(path)
-		if err == nil {
-			return true
-		}
-		return false
+		return err == nil
 	}
 	return false
 }

@@ -1,11 +1,11 @@
-package pkg
+package stuff
 
 import (
 	"fmt"
 	"os"
 )
 
-func printVersion() {
+func PrintVersion() {
 	fmt.Println("Kafka Reasign Partitions Golang version: 1.0.0")
 	fmt.Println("Provided by Leksin Dmitri")
 	fmt.Println("leksindmitri@gmail.com")

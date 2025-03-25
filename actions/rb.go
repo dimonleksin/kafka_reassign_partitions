@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dimonleksin/kafka_reasign_partition/pkg"
+	"github.com/dimonleksin/kafka_reasign_partition/cmd"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
 )
 
-func Reasign(settings pkg.Settings) {
+func Reasign(settings settings.Settings) {
 	var (
 		err            error
-		RebalancePlane pkg.Cluster
+		RebalancePlane cmd.Cluster
 		numberOfTopics int
 		responce       string
 	)
@@ -21,7 +22,7 @@ func Reasign(settings pkg.Settings) {
 	}
 	defer admin.Close()
 
-	r := pkg.Cluster{}
+	r := cmd.Cluster{}
 	err = r.GetNumberOfBrokers(admin)
 	if err != nil {
 		log.Fatal(err)
@@ -41,12 +42,9 @@ func Reasign(settings pkg.Settings) {
 	}
 	r = RebalancePlane
 
-	fmt.Println()
-
-	fmt.Println("# # # # # # # Assign after rebalance # # # # # # #")
-	fmt.Println(pkg.MakeTable(r.Brokers))
-	fmt.Println("# # # # # # # # # # # # # # # # # #  # # # # # # #")
+	fmt.Println(cmd.MakeTable(r.Brokers, "Assign after rebalance"))
 	fmt.Print("\n\nPlane to reassign. Are you sure?[y/n]: ")
+
 	_, err = fmt.Scan(&responce)
 	if err != nil {
 		log.Fatal("Error read you responce", err)

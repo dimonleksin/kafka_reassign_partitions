@@ -1,4 +1,4 @@
-package pkg
+package cmd
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/cheggaaa/pb/v3"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
 )
 
 // Returning list of brokers with topic.name-partitions-replicaAssigment
@@ -56,8 +57,7 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 			}
 		}
 	}
-	fmt.Println("# # # # # # # # Current assign # # # # # # # #")
-	fmt.Println(MakeTable(c.Brokers))
+	fmt.Println(MakeTable(c.Brokers, "Current assign"))
 
 	return nil
 }
@@ -93,7 +93,7 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics 
 	return result, numberOfTopics, nil
 }
 
-func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int, settings Settings) (err error) {
+func (c Cluster) Rebalance(admin sarama.ClusterAdmin, numberOfTopics int, Treads int, settings settings.Settings) (err error) {
 	var (
 		counter int
 		wg      sync.WaitGroup
@@ -146,7 +146,7 @@ func reassign(
 	admin sarama.ClusterAdmin,
 	topic chan string,
 	newAssign chan [][]int32,
-	settings Settings,
+	settings settings.Settings,
 	bar *pb.ProgressBar,
 	wg *sync.WaitGroup,
 ) {

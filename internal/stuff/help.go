@@ -1,4 +1,4 @@
-package pkg
+package stuff
 
 import "fmt"
 
@@ -8,6 +8,7 @@ func PrintHelp() {
 		"--topic [string/[]string] for set topics name for move\n" +
 		"\tif you send some topics - separator ','\n\n" +
 		"--action [string] Set action of you needed (move/return/rebalance)\n\n" +
+		"-backup-version [int] unnaccessary version of backup for restore (use if --action restore)\n\n" +
 		"--user [string] set username, if you dont set this arg, used PLAINTEXT\n" +
 		"\tif set --user, you need set and --password\n\n" +
 		"--password [string] set password for connect to kafka\n" +
@@ -30,5 +31,5 @@ func PrintHelp() {
 		"--file for set path to settings file. Default - ./krpg.yaml\n\n" +
 		"-h or --help for print this help"
 	fmt.Println(textHelp)
-	printVersion()
+	PrintVersion()
 }
