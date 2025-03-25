@@ -48,7 +48,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./builds/*
+        asset_path: builds/*
         asset_name: builds
         asset_content_type: application/gzip
 
