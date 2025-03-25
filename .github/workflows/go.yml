@@ -32,9 +32,6 @@ jobs:
         name: builds
         path: builds/*.tgz
 
-  release:
-    runs-on: ubuntu-latest
-    steps:
     - name: Create Draft Release
       id: create_release
       uses: actions/create-release@v1
