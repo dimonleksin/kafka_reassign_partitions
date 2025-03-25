@@ -61,3 +61,8 @@ If you set --treads > 1, process of reassign division and running parrallels, on
 
 ### For windows
     GOOS=windows GOARCH=amd64 go build -o krpg.exe
+
+
+### New Release
+
+Befare release dont forget change version in internal/stuff/version.go & .github/workflows/go.yml in RELEASE_VERSION variable
