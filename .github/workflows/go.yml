@@ -24,7 +24,7 @@ jobs:
         GOOS=windows GOARCH=amd64 go build -o builds/krpg.exe
 
     - name: Upload Go results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: builds
-        path: builds
+        path: builds/
