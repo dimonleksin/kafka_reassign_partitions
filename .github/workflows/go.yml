@@ -24,8 +24,7 @@ jobs:
         GOOS=windows GOARCH=amd64 go build -o builds/krpg.exe
     - name: Pack to tgz
       run: |
-        tar -czf builds/krpg.tgz builds/krpg && \
-        tar -czf builds/krpg_exe.tgz builds/krpg.exe
+        tar -czf builds/krpg.tgz builds/*
     # - name: Upload Go results
     #   uses: actions/upload-artifact@v4
     #   with:
@@ -48,7 +47,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: builds/
+        asset_path: builds/krpg.tgz
         asset_name: builds
         asset_content_type: application/gzip
 
