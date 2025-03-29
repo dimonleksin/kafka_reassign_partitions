@@ -15,50 +15,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Settings struct {
-	MoveSetting             MoveSettings   `yaml:"move-params"`
-	BootstrapSettings       BrokerSettings `yaml:"kafka"`
-	KafkaApiVersionFormated sarama.KafkaVersion
-	H                       *bool // equal help
-	Help                    *bool
-	Version                 *bool
-	Verbose                 bool // verbose output
-}
-
-type BrokerSettings struct {
-	BrokersS        *string          `yaml:"bootstrap-server"`
-	KafkaApiVersion *string          `yaml:"api-version"`
-	Security        SecuritySettings `yaml:"security"`
-	Brokers         []string         `yaml:"-"`
-}
-
-type SecuritySettings struct {
-	User      *string `yaml:"user"`
-	Passwd    *string `yaml:"password"`
-	Mechanism *string `yaml:"mechanism"`
-	Protocol  *string `yaml:"protocol"`
-	Tls       TLS     `yaml:"tls"`
-}
-
-type TLS struct {
-	UseTLS   *bool   `yaml:"enable"`
-	CAPath   *string `yaml:"ca"`
-	CertPath *string `yaml:"cert"`
-	KeyPath  *string `yaml:"key"`
-}
-
-type MoveSettings struct {
-	From          *int    `yaml:"from"`
-	To            []int   `yaml:"-"`
-	ToS           *string `yaml:"to"`
-	TopicS        *string `yaml:"-"`
-	Treads        *int
-	Action        *string  `yaml:"action"`
-	Topics        []string `yaml:"topics"`
-	Sync          bool     `yaml:"sync"`           // if true - await finaly rebalase before work with next topic
-	BackupVersion int      `yaml:"backup-version"` // version of backup for restore
-}
-
 func (s *Settings) GetSettings() error {
 	var (
 		err         error
@@ -251,19 +207,26 @@ func (s *Settings) parsingTopics(separator string) {
 	s.MoveSetting.Topics = append(s.MoveSetting.Topics, t...)
 }
 
+func (s Settings) checkBrokers() error {
+	for _, v := range s.BootstrapSettings.Brokers {
+		if v == "" {
+			return fmt.Errorf("bootstrap servers not find or incorrect. \n\tCurrent value of bootstrap-server %v", s.BootstrapSettings.Brokers)
+		}
+		if !strings.Contains(v, ":") {
+			return fmt.Errorf("you \"--bootstrap-server\" not contains port: %s. -h or --help for print small man", v)
+		}
+	}
+	return nil
+}
+
 func (s Settings) verifyConf() error {
 	fmt.Printf("start verify configs. Bootstrap server %v\n", s.BootstrapSettings.Brokers)
-	// fmt.Println(*s.ToS)
 	if !*s.H && !*s.Help {
-		if len(s.BootstrapSettings.Brokers) > 0 {
-			for _, v := range s.BootstrapSettings.Brokers {
-				if v == "" {
-					return fmt.Errorf("bootstrap servers not find or incorrect. \n\tCurrent value of bootstrap-server %v", s.BootstrapSettings.Brokers)
-				}
-				if !strings.Contains(v, ":") {
-					return fmt.Errorf("you \"--bootstrap-server\" not contains port: %s. -h or --help for print small man", v)
-				}
-			}
+		if len(s.BootstrapSettings.Brokers) == 0 {
+			return fmt.Errorf("--bootstrap-server is empty")
+		}
+		if err := s.checkBrokers(); err != nil {
+			return err
 		}
 		if len(*s.MoveSetting.TopicS) > 0 {
 			if *s.MoveSetting.From != -1 || *s.MoveSetting.Action != "move" {
@@ -305,6 +268,7 @@ func (s Settings) verifyConf() error {
 	return nil
 }
 
+// Check, can read cert and return false if file not found or error reading
 func canReadCert(path string) bool {
 	if len(path) > 0 {
 		_, err := os.ReadFile(path)
