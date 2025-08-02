@@ -1,4 +1,4 @@
-# Kafka Reasign Partitions Golang
+# Kafka Reassign Partitions Golang
 
 ## Small about idea
 
@@ -64,5 +64,6 @@ If you set --treads > 1, process of reassign division and running parrallels, on
 
 
 ### New Release
+
 
 Befare release dont forget change version in internal/stuff/version.go & .github/workflows/go.yml in release_name and tag_name
