@@ -1,6 +1,9 @@
 package settings
 
-import "github.com/IBM/sarama"
+import (
+	"github.com/IBM/sarama"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff/event"
+)
 
 type Settings struct {
 	MoveSetting             MoveSettings   `yaml:"move-params"`
@@ -35,13 +38,13 @@ type TLS struct {
 }
 
 type MoveSettings struct {
-	From          *int    `yaml:"from"`
-	To            []int   `yaml:"-"`
-	ToS           *string `yaml:"to"`
-	TopicS        *string `yaml:"-"`
+	From          *int          `yaml:"from"`
+	To            []int         `yaml:"-"`
+	ToS           *string       `yaml:"to"`
+	TopicS        *string       `yaml:"-"`
+	Action        event.Actions `yaml:"action"`
+	Topics        []string      `yaml:"topics"`
+	Sync          bool          `yaml:"sync"`           // if true - await finaly rebalase before work with next topic
+	BackupVersion int           `yaml:"backup-version"` // version of backup for restore
 	Treads        *int
-	Action        *string  `yaml:"action"`
-	Topics        []string `yaml:"topics"`
-	Sync          bool     `yaml:"sync"`           // if true - await finaly rebalase before work with next topic
-	BackupVersion int      `yaml:"backup-version"` // version of backup for restore
 }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff/event"
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,10 +36,10 @@ func (s *Settings) GetSettings() error {
 		"--bootstrap-server [string] Bootstrap server of kafka cluster\nfor example 127.0.0.1:9094",
 	)
 
-	s.MoveSetting.Action = flag.String(
+	action := flag.String(
 		"action",
 		"rebalance",
-		"--action [string] Set action of u needed (move/return/rebalance)",
+		"--action [string] Set action of u needed (move/restore/rebalance)",
 	)
 
 	s.BootstrapSettings.Security.User = flag.String(
@@ -138,6 +139,7 @@ func (s *Settings) GetSettings() error {
 	path_to_cfg = *flag.String("file", "./krpg.yaml", "--file for set path to settings file. Default - ./krpg.yaml")
 
 	flag.Parse()
+	s.MoveSetting.Action = event.GetEvent(*action)
 
 	if *s.Version {
 		stuff.PrintVersion()
@@ -147,7 +149,7 @@ func (s *Settings) GetSettings() error {
 		if canReadCert(path_to_cfg) {
 			s.readYamlSettings(path_to_cfg)
 		}
-		if *s.MoveSetting.Action == "move" {
+		if s.MoveSetting.Action == event.MOVE {
 			err = s.parsingTo(sep)
 			if err != nil {
 				return err
@@ -229,7 +231,7 @@ func (s Settings) verifyConf() error {
 			return err
 		}
 		if len(*s.MoveSetting.TopicS) > 0 {
-			if *s.MoveSetting.From != -1 || *s.MoveSetting.Action != "move" {
+			if *s.MoveSetting.From != -1 || s.MoveSetting.Action != event.MOVE {
 				return fmt.Errorf("if you set key --TopicS, u can't set key --from or set key --action not aqual 'nove'")
 			}
 		}
@@ -278,53 +280,66 @@ func canReadCert(path string) bool {
 }
 
 func (s Settings) Conf() (sarama.ClusterAdmin, error) {
-
+	var err error
 	config := sarama.NewConfig()
 	if len(*s.BootstrapSettings.Security.User) != 0 {
-		switch *s.BootstrapSettings.Security.Mechanism {
-		case "scram-sha-256":
-			config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
-			config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
-		case "scram-sha-512":
-			config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA512)
-			config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA512} }
-		default:
-			return nil, fmt.Errorf("supported scram-sha-256 or scram-sha-512 sasl mechanisms")
+		config, err = s.updateConfigWithSecurity(config)
+		if err != nil {
+			return nil, err
 		}
-
-		config.Net.SASL.User = *s.BootstrapSettings.Security.User
-		config.Net.SASL.Password = *s.BootstrapSettings.Security.Passwd
-		config.Net.SASL.Enable = true
 	}
 	if *s.BootstrapSettings.Security.Tls.UseTLS {
-		certs := s.BootstrapSettings.Security.Tls
-		config.Net.TLS.Enable = true
-		config.Net.TLS.Config = &tls.Config{
-			InsecureSkipVerify: false,
-		}
-		config.Net.TLS.Config.RootCAs = x509.NewCertPool()
-		if len(*certs.CAPath) != 0 {
-			cert, _ := os.ReadFile(*certs.CAPath)
-			config.Net.TLS.Config.RootCAs.AppendCertsFromPEM(cert)
-		} else {
-			config.Net.TLS.Config.RootCAs = nil
-		}
-
-		if len(*certs.CertPath) != 0 {
-			key_pair, err := tls.LoadX509KeyPair(*certs.CertPath, *certs.KeyPath)
-			if err != nil {
-				return nil, fmt.Errorf("error parsing key pair of client: %v", err)
-			}
-			config.Net.TLS.Config.Certificates = []tls.Certificate{key_pair}
+		config, err = s.updateConfigWithTLS(config)
+		if err != nil {
+			return nil, err
 		}
 	}
-
 	config.Version = s.KafkaApiVersionFormated
 	admin, err := sarama.NewClusterAdmin(s.BootstrapSettings.Brokers, config)
 	if err != nil {
 		return nil, err
 	}
 	return admin, nil
+}
+
+func (s Settings) updateConfigWithSecurity(config *sarama.Config) (*sarama.Config, error) {
+	switch *s.BootstrapSettings.Security.Mechanism {
+	case "scram-sha-256":
+		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA256)
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA256} }
+	case "scram-sha-512":
+		config.Net.SASL.Mechanism = sarama.SASLMechanism(sarama.SASLTypeSCRAMSHA512)
+		config.Net.SASL.SCRAMClientGeneratorFunc = func() sarama.SCRAMClient { return &XDGSCRAMClient{HashGeneratorFcn: SHA512} }
+	default:
+		return nil, fmt.Errorf("supported scram-sha-256 or scram-sha-512 sasl mechanisms")
+	}
+	config.Net.SASL.User = *s.BootstrapSettings.Security.User
+	config.Net.SASL.Password = *s.BootstrapSettings.Security.Passwd
+	config.Net.SASL.Enable = true
+	return config, nil
+}
+
+func (s Settings) updateConfigWithTLS(config *sarama.Config) (*sarama.Config, error) {
+	certs := s.BootstrapSettings.Security.Tls
+	config.Net.TLS.Enable = true
+	config.Net.TLS.Config = &tls.Config{
+		InsecureSkipVerify: false,
+	}
+	config.Net.TLS.Config.RootCAs = x509.NewCertPool()
+	if len(*certs.CAPath) != 0 {
+		cert, _ := os.ReadFile(*certs.CAPath)
+		config.Net.TLS.Config.RootCAs.AppendCertsFromPEM(cert)
+	} else {
+		config.Net.TLS.Config.RootCAs = nil
+	}
+	if len(*certs.CertPath) != 0 {
+		key_pair, err := tls.LoadX509KeyPair(*certs.CertPath, *certs.KeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing key pair of client: %v", err)
+		}
+		config.Net.TLS.Config.Certificates = []tls.Certificate{key_pair}
+	}
+	return config, nil
 }
 
 func (s *Settings) readYamlSettings(path string) {
