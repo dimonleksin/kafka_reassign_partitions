@@ -29,6 +29,18 @@ func (b Backup) sortBackups(backups []fs.DirEntry) []string {
 }
 
 func (b Backup) createBackupDir(home string) {
+	if !isBackupExist(home) {
+		return
+	}
+	backupDir := fmt.Sprintf("%s/%s", home, PathToBackup)
+	err := os.Mkdir(backupDir, os.ModePerm)
+	if err != nil {
+		fmt.Printf("error create backup dir. err: %v", err.Error())
+		os.Exit(1)
+	}
+}
+
+func isBackupExist(home string) bool {
 	dirs, err := os.ReadDir(home)
 	if err != nil {
 		fmt.Printf("error get user home dir. err: %v", err.Error())
@@ -36,15 +48,10 @@ func (b Backup) createBackupDir(home string) {
 	}
 	for _, dir := range dirs {
 		if dir.Type().IsDir() && dir.Name() == PathToBackup {
-			return
+			return true
 		}
 	}
-	backupDir := fmt.Sprintf("%s/%s", home, PathToBackup)
-	err = os.Mkdir(backupDir, os.ModePerm)
-	if err != nil {
-		fmt.Printf("error create backup dir. err: %v", err.Error())
-		os.Exit(1)
-	}
+	return false
 }
 
 func changeBackupVersion(backup_file_1, backup_file_2 string) error {

@@ -28,7 +28,7 @@ Max numbaer of backups - 10.
     - format: host:port, like 127.0.0.1:9092
 + --topic [string/[]string] for set topics name for move
     - if u send some topics - separator ','
-+ --action [string] Set action of u needed (move/return/rebalance)
++ --action [string] Set action of u needed (move/restore/rebalance)
 + --user [string] set username, if u dont set this arg, used PLAINTEXT
 	- if set --user, u need set and --password
 + --password [string] set password for connect to kafka

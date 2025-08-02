@@ -7,13 +7,14 @@ import (
 
 	"github.com/dimonleksin/kafka_reasign_partition/cmd"
 	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff/userresponce"
 )
 
 func Restore(settings settings.Settings) {
 	var (
-		err            error
 		numberOfTopics int
 		responce       string
+		err            error
 	)
 
 	admin, err := settings.Conf()
@@ -43,7 +44,7 @@ func Restore(settings settings.Settings) {
 		fmt.Printf("Error read you responce. %v", err)
 		os.Exit(1)
 	}
-	if responce == "y" {
+	if responce == userresponce.YES {
 		err = c.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads, settings)
 		if err != nil {
 			log.Fatal(err)

@@ -1,0 +1,29 @@
+"filename", "language", "Go Module File", "Markdown", "Go Checksum File", "YAML", "Go", "comment", "blank", "total"
+"/home/user/projects/kafka_reasign_partition/.github/workflows/go.yml", "YAML", 0, 0, 0, 45, 0, 2, 6, 53
+"/home/user/projects/kafka_reasign_partition/README.md", "Markdown", 0, 50, 0, 0, 0, 0, 18, 68
+"/home/user/projects/kafka_reasign_partition/actions/event/actions.go", "Go", 0, 0, 0, 0, 20, 0, 5, 25
+"/home/user/projects/kafka_reasign_partition/actions/move.go", "Go", 0, 0, 0, 0, 51, 0, 8, 59
+"/home/user/projects/kafka_reasign_partition/actions/rb.go", "Go", 0, 0, 0, 0, 53, 0, 9, 62
+"/home/user/projects/kafka_reasign_partition/actions/restore.go", "Go", 0, 0, 0, 0, 48, 0, 8, 56
+"/home/user/projects/kafka_reasign_partition/cmd/backup.go", "Go", 0, 0, 0, 0, 41, 1, 6, 48
+"/home/user/projects/kafka_reasign_partition/cmd/clearZero.go", "Go", 0, 0, 0, 0, 62, 3, 12, 77
+"/home/user/projects/kafka_reasign_partition/cmd/describeTopic.go", "Go", 0, 0, 0, 0, 28, 1, 4, 33
+"/home/user/projects/kafka_reasign_partition/cmd/gen_table_for_print.go", "Go", 0, 0, 0, 0, 28, 1, 6, 35
+"/home/user/projects/kafka_reasign_partition/cmd/rebalance.go", "Go", 0, 0, 0, 0, 169, 16, 19, 204
+"/home/user/projects/kafka_reasign_partition/cmd/search.go", "Go", 0, 0, 0, 0, 38, 4, 6, 48
+"/home/user/projects/kafka_reasign_partition/cmd/structs.go", "Go", 0, 0, 0, 0, 9, 4, 3, 16
+"/home/user/projects/kafka_reasign_partition/cmd/stuff.go", "Go", 0, 0, 0, 0, 138, 13, 18, 169
+"/home/user/projects/kafka_reasign_partition/go.mod", "Go Module File", 39, 0, 0, 0, 0, 3, 3, 45
+"/home/user/projects/kafka_reasign_partition/go.sum", "Go Checksum File", 0, 0, 335, 0, 0, 0, 1, 336
+"/home/user/projects/kafka_reasign_partition/internal/backup/create_backup.go", "Go", 0, 0, 0, 0, 41, 0, 6, 47
+"/home/user/projects/kafka_reasign_partition/internal/backup/restore.go", "Go", 0, 0, 0, 0, 47, 0, 6, 53
+"/home/user/projects/kafka_reasign_partition/internal/backup/rotate_backups.go", "Go", 0, 0, 0, 0, 94, 0, 10, 104
+"/home/user/projects/kafka_reasign_partition/internal/backup/structs.go", "Go", 0, 0, 0, 0, 9, 0, 2, 11
+"/home/user/projects/kafka_reasign_partition/internal/settings/scram_client.go", "Go", 0, 0, 0, 0, 29, 0, 8, 37
+"/home/user/projects/kafka_reasign_partition/internal/settings/setting.go", "Go", 0, 0, 0, 0, 304, 1, 38, 343
+"/home/user/projects/kafka_reasign_partition/internal/settings/settings_struct.go", "Go", 0, 0, 0, 0, 44, 0, 7, 51
+"/home/user/projects/kafka_reasign_partition/internal/stuff/help.go", "Go", 0, 0, 0, 0, 33, 0, 3, 36
+"/home/user/projects/kafka_reasign_partition/internal/stuff/version.go", "Go", 0, 0, 0, 0, 12, 0, 3, 15
+"/home/user/projects/kafka_reasign_partition/krpg.yaml", "YAML", 0, 0, 0, 5, 0, 2, 0, 7
+"/home/user/projects/kafka_reasign_partition/reasign_partitions.go", "Go", 0, 0, 0, 0, 32, 0, 4, 36
+"Total", "-", 39, 50, 335, 50, 1330, 51, 219, 2074
