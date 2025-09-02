@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const PathToBackup = ".krpg"
+const PathToBackup string = ".krpg"
 
 func (b Backup) getOldBackups(home string) []string {
 	backup_path := fmt.Sprintf("%v/%v", home, PathToBackup)
@@ -29,7 +29,7 @@ func (b Backup) sortBackups(backups []fs.DirEntry) []string {
 }
 
 func (b Backup) createBackupDir(home string) {
-	if !isBackupExist(home) {
+	if isBackupExist(home) {
 		return
 	}
 	backupDir := fmt.Sprintf("%s/%s", home, PathToBackup)
@@ -40,6 +40,7 @@ func (b Backup) createBackupDir(home string) {
 	}
 }
 
+// return true if dir for backup alredy exist
 func isBackupExist(home string) bool {
 	dirs, err := os.ReadDir(home)
 	if err != nil {

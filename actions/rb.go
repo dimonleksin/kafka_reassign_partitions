@@ -6,6 +6,7 @@ import (
 
 	"github.com/dimonleksin/kafka_reasign_partition/cmd"
 	"github.com/dimonleksin/kafka_reasign_partition/internal/settings"
+	"github.com/dimonleksin/kafka_reasign_partition/internal/stuff/userresponce"
 )
 
 func Reasign(settings settings.Settings) {
@@ -49,7 +50,7 @@ func Reasign(settings settings.Settings) {
 	if err != nil {
 		log.Fatal("Error read you responce", err)
 	}
-	if responce == "y" {
+	if responce == userresponce.YES {
 		err = r.Rebalance(admin, numberOfTopics, *settings.MoveSetting.Treads, settings)
 		if err != nil {
 			log.Fatal(err)

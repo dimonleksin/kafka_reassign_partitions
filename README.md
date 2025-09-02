@@ -24,30 +24,27 @@ Backup files rotate autamated, without settings.
 Max numbaer of backups - 10.
 
 ## How to use this
-+ --bootstrap_server [string] for set addres of brokers
-    - format: host:port, like 127.0.0.1:9092
-+ --topic [string/[]string] for set topics name for move
-    - if u send some topics - separator ','
-+ --action [string] Set action of u needed (move/restore/rebalance)
-+ --user [string] set username, if u dont set this arg, used PLAINTEXT
-	- if set --user, u need set and --password
-+ --password [string] set password for connect to kafka
-	- if u set password without --user, this call panic
-+ --mechanism [string] scram-sha-256 or scram-sha-512
-	- defining only if you use auth with loggin and password
-+ --tls define if need uth TLS
-+ --ca [string] path to CA file
-+ --cert [string] path to cert file
-    - if you define --cert, dont forget defined --key
-+ --key [string] path to key file
-+ --to [int] set brokers ids for desctination brokers (sep ','). For example 1,2,3
-+ --from [int] set source broker id
-+ --treads [int] seted number of treads for reassign
-+ --async sync/async work with topics. If you define this key - krpg not wait when all replicas for partition moved in desired state
-+ --api-version set version of brokers in format 2.1.0 (default)
-+ --file for set path to settings file. Default - ./krpg.yaml
-+ --version prints the version of this
-+ -h or --help for print this help
+
+| Argument | datatype | description | note |
+|---|---|---|---|
+|--bootstrap_server| string | for set addres of brokers | format: host:port, like 127.0.0.1:9092|
+|--topic | string/[]string | for set topics name for move | if u send some topics - separator ','|
+|--action | string | Set action of you needed (move/restore/rebalance) | |
+|--user | string | set username for kafka cluster | if you dont set this arg, used PLAINTEXT. if set --user, you need set and --password |
+|--password |string| set password for connect to kafka|if you set password without --user, this call panic|
+|--mechanism|string|scram-sha-256 or scram-sha-512|defining only if you use auth with loggin and password|
+|--tls| bool | define if need uth TLS| |
+|--ca||string| path to CA file| |
+|--cert|string| path to cert file|if you define --cert, dont forget defined --key|
+|--key| |string|path to key file| |
+|--to|int|set brokers ids for desctination brokers (sep ',').| For example 1,2,3|
+|--from|int|set source broker id| |
+|--treads|int|seted number of treads for reassign| |
+|--async|bool|sync/async work with topics.| If you define this key - krpg not wait when all replicas for partition moved in desired state|
+|--api-version|string|set version of brokers|format 2.1.0 (default)|
+|--file| string| for set path to settings file.| Default - ./krpg.yaml|
+|--version|bool|prints the version of this| |
+|-h or --help| print help| |
 
 
 ## Multi treads
@@ -66,4 +63,4 @@ If you set --treads > 1, process of reassign division and running parrallels, on
 ### New Release
 
 
-Befare release dont forget change version in internal/stuff/version.go & .github/workflows/go.yml in release_name and tag_name
+Before release dont forget change version in internal/stuff/version.go & .github/workflows/go.yml in release_name and tag_name
