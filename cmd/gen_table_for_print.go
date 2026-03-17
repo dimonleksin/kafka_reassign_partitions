@@ -5,7 +5,7 @@ import (
 )
 
 // make table for pretty print brokers with partitions
-func MakeTable(topics []Topics, title string) string {
+func MakeTable(topics map[int32]Topics, title string) string {
 	total := 0
 
 	t := table.NewWriter()

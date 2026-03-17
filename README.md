@@ -27,7 +27,7 @@ Max numbaer of backups - 10.
 
 | Argument | datatype | description | note |
 |---|---|---|---|
-|--bootstrap_server| string | for set addres of brokers | format: host:port, like 127.0.0.1:9092|
+|--bootstrap-server| string | for set addres of brokers | format: host:port, like 127.0.0.1:9092|
 |--topic | string/[]string | for set topics name for move | if u send some topics - separator ','|
 |--action | string | Set action of you needed (move/restore/rebalance) | |
 |--user | string | set username for kafka cluster | if you dont set this arg, used PLAINTEXT. if set --user, you need set and --password |

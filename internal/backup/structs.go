@@ -1,10 +1,10 @@
 package backup
 
 type Backup struct {
-	Brokers         []Topic `json:"brokers"`
-	NumberOfBrokers int
+	Brokers         map[int32]Topics `json:"brokers"`
+	NumberOfBrokers int32
 }
-type Topic struct {
+type Topics struct {
 	Topic   map[int]string `json:"topic"`
 	Leaders int
 }

@@ -6,8 +6,8 @@ package cmd
 */
 
 type Cluster struct {
-	Brokers         []Topics
-	NumberOfBrokers int
+	Brokers         map[int32]Topics
+	NumberOfBrokers int32
 }
 type Topics struct {
 	Topic   map[int]string

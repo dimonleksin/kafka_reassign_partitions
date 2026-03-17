@@ -176,7 +176,7 @@ func (s *Settings) parsingTo(separator string) error {
 			if err != nil {
 				return fmt.Errorf("error convert string with value from --to key to int, err: %v", err)
 			}
-			s.MoveSetting.To = append(s.MoveSetting.To, v_int)
+			s.MoveSetting.To = append(s.MoveSetting.To, int32(v_int))
 		}
 
 	} else {
@@ -184,7 +184,7 @@ func (s *Settings) parsingTo(separator string) error {
 		if err != nil {
 			return fmt.Errorf("error convert string with value from --to key to int, err: %v", err)
 		}
-		s.MoveSetting.To = append(s.MoveSetting.To, v_int)
+		s.MoveSetting.To = append(s.MoveSetting.To, int32(v_int))
 
 	}
 	return nil

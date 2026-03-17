@@ -21,37 +21,55 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 	}
 
 	if len(c.Brokers) == 0 {
-		c.Brokers = make([]Topics, c.NumberOfBrokers)
+		c.Brokers = make(map[int32]Topics)
 	}
 
-	for i := 0; i < c.NumberOfBrokers; i++ {
-		c.Brokers[i].Topic = make(map[int]string)
-	}
 	// if --from not seted (equal -1) - geting current assign for all topics
 	if from == -1 {
 		for topicName, i := range topics {
 			for partition, brokers := range i.ReplicaAssignment {
 				for l, broker := range brokers {
-					c.Brokers[broker].Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
-					if l+1 == 1 {
-						c.Brokers[broker].Leaders += 1
+					t, exist := c.Brokers[broker]
+					if !exist {
+						t = Topics{
+							Topic: make(map[int]string),
+						}
 					}
+					if t.Topic == nil {
+						t.Topic = make(map[int]string)
+					}
+
+					t.Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
+					if l+1 == 1 {
+						t.Leaders += 1
+					}
+					c.Brokers[broker] = t
 					counter++
 				}
 			}
 		}
 	} else {
-		for k, i := range topics {
+		for topicName, i := range topics {
 			replicaAssigment := i.ReplicaAssignment
 			if !searchForMove(replicaAssigment, int32(from)) {
 				continue
 			}
-			for p, bs := range replicaAssigment {
-				for l, b := range bs {
-					c.Brokers[b].Topic[counter] = fmt.Sprintf("%s-%d-%d", k, p, l+1)
-					if l+1 == 1 {
-						c.Brokers[b].Leaders += 1
+			for partition, brokers := range replicaAssigment {
+				for l, brokerId := range brokers {
+					t, exist := c.Brokers[brokerId]
+					if !exist {
+						t = Topics{
+							Topic: make(map[int]string),
+						}
 					}
+					if t.Topic == nil {
+						t.Topic = make(map[int]string)
+					}
+					t.Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
+					if l+1 == 1 {
+						t.Leaders += 1
+					}
+					c.Brokers[brokerId] = t
 					counter++
 				}
 			}
@@ -62,7 +80,7 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 	return nil
 }
 
-func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics int, err error) {
+func (c Cluster) CreateRebalancePlane(to []int32) (result Cluster, numberOfTopics int, err error) {
 	var (
 		allTopics     map[int]string
 		allTopicsSort map[int]string

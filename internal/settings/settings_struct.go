@@ -39,7 +39,7 @@ type TLS struct {
 
 type MoveSettings struct {
 	From          *int          `yaml:"from"`
-	To            []int         `yaml:"-"`
+	To            []int32       `yaml:"-"`
 	ToS           *string       `yaml:"to"`
 	TopicS        *string       `yaml:"-"`
 	Action        event.Actions `yaml:"action"`
