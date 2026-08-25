@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -21,21 +22,31 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 	}
 
 	if len(c.Brokers) == 0 {
-		c.Brokers = make([]Topics, c.NumberOfBrokers)
+		c.Brokers = make(map[int]Topics)
 	}
-
-	for i := 0; i < c.NumberOfBrokers; i++ {
-		c.Brokers[i].Topic = make(map[int]string)
+	// ensure Topic maps exist for known brokers
+	for id := range c.Brokers {
+		t := c.Brokers[id]
+		if t.Topic == nil {
+			t.Topic = make(map[int]string)
+			c.Brokers[id] = t
+		}
 	}
 	// if --from not seted (equal -1) - geting current assign for all topics
 	if from == -1 {
 		for topicName, i := range topics {
 			for partition, brokers := range i.ReplicaAssignment {
 				for l, broker := range brokers {
-					c.Brokers[broker].Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
-					if l+1 == 1 {
-						c.Brokers[broker].Leaders += 1
+					bID := int(broker)
+					t := c.Brokers[bID]
+					if t.Topic == nil {
+						t.Topic = make(map[int]string)
 					}
+					t.Topic[counter] = fmt.Sprintf("%s-%d-%d", topicName, partition, l+1)
+					if l+1 == 1 {
+						t.Leaders += 1
+					}
+					c.Brokers[bID] = t
 					counter++
 				}
 			}
@@ -48,10 +59,16 @@ func (c *Cluster) GetCurrentBalance(admin sarama.ClusterAdmin, from int) (err er
 			}
 			for p, bs := range replicaAssigment {
 				for l, b := range bs {
-					c.Brokers[b].Topic[counter] = fmt.Sprintf("%s-%d-%d", k, p, l+1)
-					if l+1 == 1 {
-						c.Brokers[b].Leaders += 1
+					bID := int(b)
+					t := c.Brokers[bID]
+					if t.Topic == nil {
+						t.Topic = make(map[int]string)
 					}
+					t.Topic[counter] = fmt.Sprintf("%s-%d-%d", k, p, l+1)
+					if l+1 == 1 {
+						t.Leaders += 1
+					}
+					c.Brokers[bID] = t
 					counter++
 				}
 			}
@@ -68,11 +85,13 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics 
 		allTopicsSort map[int]string
 		leaders       int
 		counter       int
+		brokerIDs     []int
 	)
 
 	allTopics = make(map[int]string)
 
-	for _, v := range c.Brokers {
+	for id, v := range c.Brokers {
+		brokerIDs = append(brokerIDs, id)
 		for _, t := range v.Topic {
 			allTopics[counter] = t
 			counter++
@@ -80,12 +99,15 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics 
 		leaders += v.Leaders
 	}
 
+	// ensure deterministic order
+	sort.Ints(brokerIDs)
+
 	allTopicsSort, err = sortTopicMap(allTopics)
 	if err != nil {
 		return result, 0, err
 	}
 	numberOfTopics = len(allTopics)
-	result, err = makePlane(allTopicsSort, c.NumberOfBrokers, to)
+	result, err = makePlane(allTopicsSort, brokerIDs, to)
 
 	if err != nil {
 		return result, numberOfTopics, nil
