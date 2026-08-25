@@ -56,57 +56,71 @@ func shufleCounter(to []int) []int {
 	return to
 }
 
-// Maked plane for rebalance | nob - Number Of Brokers
-func makePlane(topics map[int]string, nob int, to []int) (result Cluster, err error) {
-	counter := 1
-	if to != nil {
-		counter = to[0]
+// Maked plane for rebalance | brokerIDs - list of available broker ids
+func makePlane(topics map[int]string, brokerIDs []int, to []int) (result Cluster, err error) {
+	// counterIndex is index into brokerIDs
+	counterIndex := 0
+	// if --to set, we rotate over 'to' list of broker ids
+	useTo := false
+	currentToIndex := 0
+	if to != nil && len(to) > 0 {
+		useTo = true
 	}
 
+	// init result.Brokers map and entries
 	if len(result.Brokers) == 0 {
-		result.Brokers = make([]Topics, nob)
+		result.Brokers = make(map[int]Topics)
 	}
-	// allocating memory for all brokers in map
-	for i := 0; i < nob; i++ {
-		result.Brokers[i].Topic = make(map[int]string)
+	for _, id := range brokerIDs {
+		t := result.Brokers[id]
+		if t.Topic == nil {
+			t.Topic = make(map[int]string)
+		}
+		result.Brokers[id] = t
 	}
-	// not range, because neded received topic in ascending order or sorting not working
+
+	// iterate topics in index order
 	for i := 0; i < len(topics); i++ {
-		if counter == nob {
-			counter = 1
+		// determine current broker id
+		var currentBrokerID int
+		if useTo {
+			currentBrokerID = to[currentToIndex]
+		} else {
+			currentBrokerID = brokerIDs[counterIndex]
 		}
-		if to != nil {
-			counter = to[0]
-		}
+
 		// Getting role from topic: 1 - leader, 2 and other - replicas
 		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
 		if err != nil {
 			return result, err
 		}
 
-		// increment counter until broker with current replicas not fount for avoid dublications
-		for search(result.Brokers[counter].Topic, topics[i][0:len(topics[i])-2]) {
-			// if --to not set, reasign for all brokers
-			if to == nil {
-				counter++
+		// increment counter until broker with current replicas not found for avoid duplications
+		for search(result.Brokers[currentBrokerID].Topic, topics[i][0:len(topics[i])-2]) {
+			if useTo {
+				currentToIndex = (currentToIndex + 1) % len(to)
+				currentBrokerID = to[currentToIndex]
 			} else {
-				// if --to seted, reasign to brokers from --to
-				counter = to[0]
-				to = shufleCounter(to)
-			}
-			if counter == nob {
-				counter = 1
+				counterIndex = (counterIndex + 1) % len(brokerIDs)
+				currentBrokerID = brokerIDs[counterIndex]
 			}
 		}
+
 		if currentRole == 1 {
-			result.Brokers[counter].Leaders += 1
+			tmp := result.Brokers[currentBrokerID]
+			tmp.Leaders += 1
+			result.Brokers[currentBrokerID] = tmp
 		}
-		result.Brokers[counter].Topic[i] = topics[i]
-		if to == nil {
-			counter++
+		// assign topic
+		tmp := result.Brokers[currentBrokerID]
+		tmp.Topic[i] = topics[i]
+		result.Brokers[currentBrokerID] = tmp
+
+		// advance counters
+		if useTo {
+			currentToIndex = (currentToIndex + 1) % len(to)
 		} else {
-			counter = to[0]
-			to = shufleCounter(to)
+			counterIndex = (counterIndex + 1) % len(brokerIDs)
 		}
 	}
 
@@ -122,8 +136,8 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 	fmt.Println("Starting executing plane")
 	assigments := make(map[string][][]int32)
 
-	for i := 1; i < len(c.Brokers); i++ {
-		for _, t := range c.Brokers[i].Topic {
+	for brokerID, b := range c.Brokers {
+		for _, t := range b.Topic {
 			topic, partitionID, positionID, err = parsTopicParams(t)
 
 			if err != nil {
@@ -136,7 +150,7 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 			if len(assigments[topic][partitionID]) == 0 {
 				assigments[topic][partitionID] = make([]int32, 5)
 			}
-			assigments[topic][partitionID][positionID] = int32(i)
+			assigments[topic][partitionID][positionID] = int32(brokerID)
 		}
 	}
 	plane, err = clearZeroValue(assigments)
@@ -149,20 +163,25 @@ func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, e
 // addded number of brokers from cluster to struct
 func (c *Cluster) GetNumberOfBrokers(admin sarama.ClusterAdmin) (err error) {
 	var (
-		brokers   []*sarama.Broker
-		maxBroker int
+		brokers []*sarama.Broker
 	)
 	brokers, _, err = admin.DescribeCluster()
 	if err != nil {
 		return fmt.Errorf("something happened when i getting metadata with brokers. Err: %v", err)
 	}
-	// search max broker id, because brokers not need
-	for _, broker := range brokers {
-		if broker.ID() > int32(maxBroker) {
-			maxBroker = int(broker.ID())
-		}
+	// Build map of brokers keyed by real broker ID
+	if len(c.Brokers) == 0 {
+		c.Brokers = make(map[int]Topics)
 	}
-	c.NumberOfBrokers = maxBroker + 1
+	for _, broker := range brokers {
+		id := int(broker.ID())
+		t := c.Brokers[id]
+		if t.Topic == nil {
+			t.Topic = make(map[int]string)
+		}
+		c.Brokers[id] = t
+	}
+	c.NumberOfBrokers = len(brokers)
 	fmt.Printf("Number of brokers:  %d\n", c.NumberOfBrokers)
 	return nil
 }

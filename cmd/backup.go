@@ -20,28 +20,31 @@ func (c *Cluster) Restore(version int) {
 
 func (c *Cluster) CopyBackupToCluster(b backup.Backup) {
 	if len(c.Brokers) == 0 {
-		c.Brokers = make([]Topics, c.NumberOfBrokers)
+		c.Brokers = make(map[int]Topics)
 	}
-	for i := 0; i < len(b.Brokers); i++ {
-		if len(c.Brokers[i].Topic) == 0 {
-			c.Brokers[i].Topic = make(map[int]string)
+	for _, bt := range b.Brokers {
+		id := bt.BrokerID
+		t := c.Brokers[id]
+		if t.Topic == nil {
+			t.Topic = make(map[int]string)
 		}
-		c.Brokers[i].Topic = b.Brokers[i].Topic
-		c.Brokers[i].Leaders = b.Brokers[i].Leaders
+		t.Topic = bt.Topic
+		t.Leaders = bt.Leaders
+		c.Brokers[id] = t
 	}
 	c.NumberOfBrokers = b.NumberOfBrokers
 }
 
 func (c *Cluster) CopyClusterToBackup(b *backup.Backup) {
-	if len(b.Brokers) == 0 {
-		b.Brokers = make([]backup.Topic, c.NumberOfBrokers)
-	}
-	for i := 0; i < len(c.Brokers); i++ {
-		if len(b.Brokers[i].Topic) == 0 {
-			b.Brokers[i].Topic = make(map[int]string)
+	// Build Brokers slice with explicit BrokerID entries
+	b.Brokers = make([]backup.Topic, 0, len(c.Brokers))
+	for id, t := range c.Brokers {
+		bt := backup.Topic{
+			BrokerID: id,
+			Topic:    t.Topic,
+			Leaders:  t.Leaders,
 		}
-		b.Brokers[i].Topic = c.Brokers[i].Topic
-		b.Brokers[i].Leaders = c.Brokers[i].Leaders
+		b.Brokers = append(b.Brokers, bt)
 	}
 	b.NumberOfBrokers = c.NumberOfBrokers
 }
