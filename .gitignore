@@ -1,3 +1,4 @@
 *.json
 ./*.py
 builds
+krpg*
