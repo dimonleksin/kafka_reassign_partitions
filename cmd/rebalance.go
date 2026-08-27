@@ -112,6 +112,7 @@ func (c Cluster) CreateRebalancePlane(to []int) (result Cluster, numberOfTopics 
 	if err != nil {
 		return result, numberOfTopics, nil
 	}
+	result = filterUnchangedPartitions(c, result)
 	return result, numberOfTopics, nil
 }
 
