@@ -37,14 +37,14 @@ func (c *Cluster) CopyBackupToCluster(b backup.Backup) {
 
 func (c *Cluster) CopyClusterToBackup(b *backup.Backup) {
 	// Build Brokers slice with explicit BrokerID entries
-	b.Brokers = make([]backup.Topic, 0, len(c.Brokers))
+	b.Brokers = make(map[int]backup.Topic)
 	for id, t := range c.Brokers {
 		bt := backup.Topic{
 			BrokerID: id,
 			Topic:    t.Topic,
 			Leaders:  t.Leaders,
 		}
-		b.Brokers = append(b.Brokers, bt)
+		b.Brokers[id] = bt
 	}
 	b.NumberOfBrokers = c.NumberOfBrokers
 }

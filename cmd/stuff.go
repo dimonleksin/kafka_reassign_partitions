@@ -90,7 +90,11 @@ func makePlane(topics map[int]string, brokerIDs []int, to []int) (result Cluster
 		}
 
 		// Getting role from topic: 1 - leader, 2 and other - replicas
-		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
+		topicParams := strings.Split(topics[i], "-")
+		if len(topicParams) < 3 {
+			return result, fmt.Errorf("invalid topic format: %s", topics[i])
+		}
+		currentRole, err := strconv.Atoi(topicParams[len(topicParams)-1])
 		if err != nil {
 			return result, err
 		}
