@@ -90,7 +90,11 @@ func makePlane(topics map[int]string, brokerIDs []int, to []int) (result Cluster
 		}
 
 		// Getting role from topic: 1 - leader, 2 and other - replicas
-		currentRole, err := strconv.Atoi(strings.Split(topics[i], "-")[len(strings.Split(topics[i], "-"))-1])
+		topicParams := strings.Split(topics[i], "-")
+		if len(topicParams) < 3 {
+			return result, fmt.Errorf("invalid topic format: %s", topics[i])
+		}
+		currentRole, err := strconv.Atoi(topicParams[len(topicParams)-1])
 		if err != nil {
 			return result, err
 		}
@@ -125,6 +129,88 @@ func makePlane(topics map[int]string, brokerIDs []int, to []int) (result Cluster
 	}
 
 	return result, nil
+}
+
+func buildReplicaSequence(cluster Cluster) (map[string]map[int][]int32, error) {
+	result := make(map[string]map[int][]int32)
+	for brokerID, broker := range cluster.Brokers {
+		for _, topicEntry := range broker.Topic {
+			topicName, partitionID, positionID, err := parsTopicParams(topicEntry)
+			if err != nil {
+				return nil, err
+			}
+			if result[topicName] == nil {
+				result[topicName] = make(map[int][]int32)
+			}
+			if result[topicName][partitionID] == nil {
+				result[topicName][partitionID] = make([]int32, 0, 5)
+			}
+			partitionSequence := result[topicName][partitionID]
+			if len(partitionSequence) < positionID {
+				partitionSequence = append(partitionSequence, make([]int32, positionID-len(partitionSequence))...)
+			}
+			partitionSequence[positionID-1] = int32(brokerID)
+			result[topicName][partitionID] = partitionSequence
+		}
+	}
+	return result, nil
+}
+
+func replicaSequenceEqual(a, b []int32) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func filterUnchangedPartitions(current, desired Cluster) Cluster {
+	currentAssignments, err := buildReplicaSequence(current)
+	if err != nil {
+		return desired
+	}
+	desiredAssignments, err := buildReplicaSequence(desired)
+	if err != nil {
+		return desired
+	}
+
+	for topicName, partitions := range desiredAssignments {
+		for partitionID, desiredSequence := range partitions {
+			currentSequence, ok := currentAssignments[topicName][partitionID]
+			if !ok || !replicaSequenceEqual(currentSequence, desiredSequence) {
+				continue
+			}
+			for brokerID, broker := range desired.Brokers {
+				for entryID, topicEntry := range broker.Topic {
+					topic, partition, _, err := parsTopicParams(topicEntry)
+					if err == nil && topic == topicName && partition == partitionID {
+						delete(desired.Brokers[brokerID].Topic, entryID)
+					}
+				}
+			}
+		}
+	}
+
+	for brokerID, broker := range desired.Brokers {
+		leaders := 0
+		for _, topicEntry := range broker.Topic {
+			topicName, partitionID, positionID, err := parsTopicParams(topicEntry)
+			if err != nil {
+				continue
+			}
+			if positionID == 1 && topicName != "" && partitionID >= 0 {
+				leaders++
+			}
+		}
+		broker.Leaders = leaders
+		desired.Brokers[brokerID] = broker
+	}
+
+	return desired
 }
 
 func (c Cluster) ExtructPlane(numberOfTopics int) (plane map[string][][]int32, err error) {

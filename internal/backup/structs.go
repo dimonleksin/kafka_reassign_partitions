@@ -4,8 +4,8 @@ package backup
 // entries that include the real BrokerID so backups don't rely on array
 // positions matching broker IDs.
 type Backup struct {
-	Brokers         []Topic `json:"brokers"`
-	NumberOfBrokers int     `json:"number_of_brokers"`
+	Brokers         map[int]Topic `json:"brokers"`
+	NumberOfBrokers int           `json:"number_of_brokers"`
 }
 
 type Topic struct {

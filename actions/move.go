@@ -37,6 +37,10 @@ func MoveTopic(settings settings.Settings) (err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(plane.Brokers) == 0 {
+		fmt.Println("All partitions already match the desired assignment. Nothing to move.")
+		return nil
+	}
 	r = plane
 
 	fmt.Println(cmd.MakeTable(r.Brokers, "Assign after move"))
